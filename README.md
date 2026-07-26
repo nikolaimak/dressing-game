@@ -26,9 +26,11 @@ which browsers only load over http.)
 - Tap a figure in the scene to switch to them. You can also drag a piece from the
   tray onto the scene.
 - **Paint anything** — the dashed panel in the tray colours whatever is selected:
-  the piece in the current slot, or the decoration you last tapped. 28 swatches
-  plus a colour picker for any shade you like. Every item keeps its own colour, so
-  the gown, the crown and the shoes can all be different.
+  the piece in the current slot, or the decoration you last tapped. 28 swatches,
+  plus a **+** button that opens a colour mixer (colour / strength / light rails)
+  for any shade you like. The mixer opens inline in the tray, so it can never fall
+  off the edge of the screen. Every item keeps its own colour, so the gown, the
+  crown and the shoes can all be different.
 - **Room tab** — pick a room theme, or set the wall and floor colours yourself, then
   choose wall and floor patterns and tap decorations to add them. Drag a decoration
   to move it, tap it twice (or press Delete) to take it away.
@@ -36,8 +38,15 @@ which browsers only load over http.)
   redecorates the room. **Clear** undresses the selected figure, or empties the room.
   **Save** downloads the scene as a PNG.
 
-Dark room themes flip the whole drawing to chalk-on-blackboard so plain ink pieces
-stay readable.
+**Dark theme** — the 🌙 button in the toolbar switches the app itself between light
+and dark; it starts on whatever your device prefers and remembers your choice.
+Separately, dark *room* themes (Night, Ocean, Berry) flip the drawing itself to
+chalk-on-blackboard so plain ink pieces stay readable.
+
+**On a phone** — the layout adapts: portrait stacks the room above the tray with
+icon-only tools, landscape puts the tray back alongside. Everything is driven by
+pointer events, so dragging decorations, sliding the colour rails and tapping twice
+to remove all work with touch.
 
 Everything is stored in `localStorage`, so your outfits and room are still there
 next time.
@@ -55,7 +64,7 @@ next time.
 | File | Purpose |
 | --- | --- |
 | `js/marker.js` | Hand-drawn drawing primitives: seeded jitter strokes, solid ink shapes, loop/scribble/hatch/dot fills, bead chains, crown teeth, scallops — plus `recolour()`, which repaints a finished drawing. |
-| `js/colours.js` | The 28 paint swatches, the room themes and the light/dark contrast helpers. |
+| `js/colours.js` | The 28 paint swatches, the room themes, hex/HSL conversion and the light/dark contrast helpers. |
 | `js/figures.js` | Shared anatomy (`A`) plus the lady and gentleman base bodies. Every garment is authored against these coordinates. |
 | `js/wardrobe.js` | The clothing catalog, built from parameterised gown/sleeve/shoe/glove helpers. |
 | `js/decor.js` | Wall and floor patterns and the room decorations. |

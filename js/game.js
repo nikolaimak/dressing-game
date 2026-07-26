@@ -4,7 +4,7 @@ import { INK, PAPER, stroke, ellipsePts, uid, recolour } from './marker.js';
 import { VB, body } from './figures.js';
 import { CATALOG, SLOTS, SLOT_ORDER, findItem } from './wardrobe.js';
 import { SCENE, WALL_PATTERNS, FLOOR_PATTERNS, DECOR, findDecor } from './decor.js';
-import { COLOURS, ROOM_THEMES, themeById, randomColour, contrastInk, isDark } from './colours.js';
+import { COLOURS, ROOM_THEMES, themeById, randomColour, contrastInk, isDark, hexToHsl, hslToHex } from './colours.js';
 
 const STORE_KEY = 'marker-dressup-v2';
 const FIGURE_SCALE = 0.9;
@@ -22,6 +22,11 @@ function skin(markup, background) {
   return isDark(background) ? markup.split(INK).join(CHALK).split(PAPER).join(DARK_PAPER) : markup;
 }
 
+/** Tray thumbnails follow the app theme, not the room. */
+function traySkin(markup) {
+  return state.ui === 'dark' ? skin(markup, '#000000') : markup;
+}
+
 const emptyLook = () => ({ outfit: null, head: null, neck: null, hands: null, feet: null, extra: null });
 
 const state = {
@@ -36,6 +41,9 @@ const state = {
   tints: { lady: emptyLook(), gent: emptyLook() },
   decor: [],
   selectedDecor: null,
+  ui: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+  mixer: null,
+  mix: { h: 210, s: 70, l: 50 },
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -168,12 +176,12 @@ function renderScene() {
 
 function itemPreview(item, P) {
   const [x, y, w, h] = item.preview;
-  return `<svg class="thumb" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${item.draw(P)}</svg>`;
+  return `<svg class="thumb" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${traySkin(item.draw(P))}</svg>`;
 }
 
 function decorPreview(def, colour) {
   const [x, y, w, h] = def.box;
-  return `<svg class="thumb" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${recolour(def.draw(), colour)}</svg>`;
+  return `<svg class="thumb" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${traySkin(recolour(def.draw(), colour))}</svg>`;
 }
 
 function renderTabs() {
@@ -202,10 +210,7 @@ function paintTarget() {
 
 function paintPanel() {
   const target = paintTarget();
-  const empty =
-    state.tab === 'room'
-      ? 'Tap a decoration in the room to paint it'
-      : `Put something on to paint it`;
+  const empty = state.tab === 'room' ? 'Tap a decoration to paint it' : 'Put something on to paint it';
   const current = target ? target.colour.toLowerCase() : INK;
   const dots = COLOURS.map(
     (c) =>
@@ -215,12 +220,39 @@ function paintPanel() {
   return `<div class="paint${target ? '' : ' off'}">
     <div class="paint-head">
       <span class="paint-label">${target ? `🖌 ${target.name}` : `🖌 ${empty}`}</span>
-      <label class="picker" title="Any colour you like">
-        <input type="color" id="paint-picker" value="${current}" ${target ? '' : 'disabled'} />
-        <span>＋</span>
-      </label>
+      ${mixButton('item', current, target ? '' : 'disabled')}
     </div>
     <div class="dots">${dots}</div>
+    ${mixerPanel('item', current)}
+  </div>`;
+}
+
+/** Button that opens the colour mixer for a target. */
+function mixButton(target, colour, disabled = '') {
+  const open = state.mixer === target;
+  return `<button class="mix-open${open ? ' on' : ''}" data-mixopen="${target}" ${disabled}
+    aria-expanded="${open}" title="Mix your own colour">
+    <span class="mix-swatch" style="background:${colour}"></span><span class="mix-plus">${open ? '×' : '+'}</span></button>`;
+}
+
+/** Hue / strength / lightness rails, rendered inline so they can never fall off screen. */
+function mixerPanel(target, colour) {
+  if (state.mixer !== target) return '';
+  const { h, s, l } = state.mix;
+  const hex = hslToHex(h, s, l);
+  const rail = (axis, label, min, max, value, gradient) =>
+    `<label class="mix-row"><span>${label}</span>
+      <input type="range" class="rail" data-mix="${axis}" min="${min}" max="${max}" value="${value}"
+        style="background:${gradient}" aria-label="${label}" /></label>`;
+  return `<div class="mixer" data-mixer="${target}">
+    <div class="mix-top">
+      <span class="mix-chip" style="background:${hex}"></span>
+      <code class="mix-hex">${hex}</code>
+      <button class="mix-done" data-mixclose="1">Done</button>
+    </div>
+    ${rail('h', 'Colour', 0, 359, h, 'linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)')}
+    ${rail('s', 'Strength', 0, 100, s, `linear-gradient(to right,${hslToHex(h, 0, l)},${hslToHex(h, 100, l)})`)}
+    ${rail('l', 'Light', 4, 96, l, `linear-gradient(to right,#000000,${hslToHex(h, s, 50)},#ffffff)`)}
   </div>`;
 }
 
@@ -232,6 +264,7 @@ function setTray(html) {
 }
 
 function renderTray() {
+  if (state.mixer === 'item' && !paintTarget()) state.mixer = null;
   if (state.tab === 'room') return renderRoomTray();
   const kind = state.tab;
   const chips = SLOTS.map(
@@ -250,6 +283,7 @@ function renderTray() {
 }
 
 function renderRoomTray() {
+  if (state.mixer === 'item' && !paintTarget()) state.mixer = null;
   const themes = ROOM_THEMES.map(
     (t) =>
       `<button class="swatch${state.theme === t.id ? ' on' : ''}" data-theme="${t.id}" title="${t.name}">
@@ -269,9 +303,10 @@ function renderRoomTray() {
   setTray(`
     <div class="section"><h3>Room theme</h3><div class="swatches">${themes}</div>
       <div class="surface-row">
-        <label class="surface">Wall <input type="color" id="wall-picker" value="${state.wallColor}" /></label>
-        <label class="surface">Floor <input type="color" id="floor-picker" value="${state.floorColor}" /></label>
+        <span class="surface">Wall ${mixButton('wall', state.wallColor)}</span>
+        <span class="surface">Floor ${mixButton('floor', state.floorColor)}</span>
       </div>
+      ${mixerPanel('wall', state.wallColor)}${mixerPanel('floor', state.floorColor)}
     </div>
     <div class="section"><h3>Wall pattern</h3><div class="chips">${walls}</div></div>
     <div class="section"><h3>Floor pattern</h3><div class="chips">${floors}</div></div>
@@ -297,7 +332,7 @@ function wear(kind, slot, id) {
   renderScene();
 }
 
-function paint(colour) {
+function paint(colour, quiet = false) {
   if (state.tab === 'room') {
     const sel = state.decor.find((d) => d.uid === state.selectedDecor);
     if (!sel) return;
@@ -307,8 +342,35 @@ function paint(colour) {
     state.tints[state.tab][state.slot] = colour === INK ? null : colour;
   }
   save();
-  renderTray();
+  if (!quiet) renderTray();
   renderScene();
+}
+
+function applyMix(hex, quiet) {
+  if (state.mixer === 'wall') {
+    state.wallColor = hex;
+    state.theme = null;
+    save();
+    if (!quiet) renderTray();
+    renderScene();
+    return;
+  }
+  if (state.mixer === 'floor') {
+    state.floorColor = hex;
+    state.theme = null;
+    save();
+    if (!quiet) renderTray();
+    renderScene();
+    return;
+  }
+  paint(hex, quiet);
+}
+
+function currentColourOf(target) {
+  if (target === 'wall') return state.wallColor;
+  if (target === 'floor') return state.floorColor;
+  const t = paintTarget();
+  return t ? t.colour : INK;
 }
 
 function rectOf(def, x, y) {
@@ -462,17 +524,42 @@ tabsEl.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-tab]');
   if (!btn) return;
   state.tab = btn.dataset.tab;
+  state.mixer = null;
   save();
   renderAll();
 });
 
 tray.addEventListener('click', (e) => {
+  if (e.target.closest('[data-mixclose]')) {
+    state.mixer = null;
+    renderTray();
+    return;
+  }
+  const opener = e.target.closest('[data-mixopen]');
+  if (opener) {
+    const target = opener.dataset.mixopen;
+    state.mixer = state.mixer === target ? null : target;
+    if (state.mixer) {
+      const cur = currentColourOf(target);
+      // A plain-ink item would open the rails at near-black, where moving the
+      // hue does nothing visible. Start from a usable colour instead, and apply
+      // it straight away so the swatch, the rails and the drawing agree.
+      state.mix = cur.toLowerCase() === INK ? { h: state.mix.h, s: 75, l: 50 } : hexToHsl(cur);
+      applyMix(hslToHex(state.mix.h, state.mix.s, state.mix.l), true);
+    }
+    renderTray();
+    return;
+  }
   const swatch = e.target.closest('[data-paint]');
-  if (swatch) return paint(swatch.dataset.paint);
+  if (swatch) {
+    if (state.mixer) state.mix = hexToHsl(swatch.dataset.paint);
+    return paint(swatch.dataset.paint);
+  }
 
   const slotBtn = e.target.closest('[data-slot]:not([data-item])');
   if (slotBtn) {
     state.slot = slotBtn.dataset.slot;
+    state.mixer = null;
     renderTray();
     return;
   }
@@ -508,20 +595,24 @@ tray.addEventListener('click', (e) => {
 });
 
 tray.addEventListener('input', (e) => {
-  if (e.target.id === 'paint-picker') return paint(e.target.value);
-  if (e.target.id === 'wall-picker') {
-    state.wallColor = e.target.value;
-    state.theme = null;
-    save();
-    renderScene();
-    return;
-  }
-  if (e.target.id === 'floor-picker') {
-    state.floorColor = e.target.value;
-    state.theme = null;
-    save();
-    renderScene();
-  }
+  const rail = e.target.closest('[data-mix]');
+  if (!rail) return;
+  state.mix[rail.dataset.mix] = Number(rail.value);
+  const { h, s: sat, l } = state.mix;
+  const hex = hslToHex(h, sat, l);
+  applyMix(hex, true);
+  const box = rail.closest('.mixer');
+  box.querySelector('.mix-chip').style.background = hex;
+  box.querySelector('.mix-hex').textContent = hex;
+  box.querySelector('[data-mix="s"]').style.background = `linear-gradient(to right,${hslToHex(h, 0, l)},${hslToHex(h, 100, l)})`;
+  box.querySelector('[data-mix="l"]').style.background = `linear-gradient(to right,#000000,${hslToHex(h, sat, 50)},#ffffff)`;
+  const opener = tray.querySelector(`[data-mixopen="${box.dataset.mixer}"] .mix-swatch`);
+  if (opener) opener.style.background = hex;
+});
+
+// once a rail is released, refresh the swatches and thumbnails
+tray.addEventListener('change', (e) => {
+  if (e.target.closest('[data-mix]')) renderTray();
 });
 
 // drag a card from the tray onto the scene
@@ -613,6 +704,7 @@ svg.addEventListener('pointerdown', (e) => {
   }
   if (hit.figure && state.tab !== hit.figure.dataset.kind) {
     state.tab = hit.figure.dataset.kind;
+    state.mixer = null;
     save();
     renderAll();
   }
@@ -663,6 +755,20 @@ window.addEventListener('keydown', (e) => {
   removeDecor(state.selectedDecor);
 });
 
+function applyUiTheme() {
+  document.documentElement.dataset.ui = state.ui;
+  const btn = $('#btn-theme');
+  btn.querySelector('.ico').textContent = state.ui === 'dark' ? '☀️' : '🌙';
+  btn.querySelector('.label').textContent = state.ui === 'dark' ? 'Light' : 'Dark';
+}
+
+$('#btn-theme').addEventListener('click', () => {
+  state.ui = state.ui === 'dark' ? 'light' : 'dark';
+  applyUiTheme();
+  save();
+  renderTray();
+});
+
 $('#btn-rainbow').addEventListener('click', rainbow);
 $('#btn-surprise').addEventListener('click', surprise);
 $('#btn-clear').addEventListener('click', clearCurrent);
@@ -671,6 +777,7 @@ $('#btn-save').addEventListener('click', savePicture);
 /* ------------------------------------------------------------------ start */
 
 load();
+applyUiTheme();
 if (!state.looks.lady.outfit && !state.looks.gent.outfit && !state.decor.length) {
   state.looks.lady = { ...emptyLook(), outfit: 'ball-gown', head: 'spike-crown', neck: 'bead-loop', feet: 'heels' };
   state.looks.gent = { ...emptyLook(), outfit: 'tailcoat', head: 'top-hat', neck: 'bow-tie', feet: 'buckle-shoes', extra: 'cane' };

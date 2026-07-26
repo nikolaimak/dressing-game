@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-ui="light">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
     <title>The Dressing Game</title>
     <link rel="stylesheet" href="css/style.css" />
     <link
@@ -14,10 +14,16 @@
     <header class="topbar">
       <h1>The Dressing Game</h1>
       <div class="tools">
-        <button id="btn-rainbow" class="tool" title="Give everything a new colour">🌈 Rainbow</button>
-        <button id="btn-surprise" class="tool" title="Dress everyone at random">🎲 Surprise!</button>
-        <button id="btn-clear" class="tool" title="Undress the chosen figure / empty the room">🧺 Clear</button>
-        <button id="btn-save" class="tool" title="Save the picture">💾 Save</button>
+        <button id="btn-rainbow" class="tool" title="Give everything a new colour" aria-label="Rainbow">
+          <span class="ico">🌈</span><span class="label">Rainbow</span></button>
+        <button id="btn-surprise" class="tool" title="Dress everyone at random" aria-label="Surprise">
+          <span class="ico">🎲</span><span class="label">Surprise!</span></button>
+        <button id="btn-clear" class="tool" title="Undress the chosen figure / empty the room" aria-label="Clear">
+          <span class="ico">🧺</span><span class="label">Clear</span></button>
+        <button id="btn-save" class="tool" title="Save the picture" aria-label="Save picture">
+          <span class="ico">💾</span><span class="label">Save</span></button>
+        <button id="btn-theme" class="tool" title="Light or dark app theme" aria-label="Switch app theme">
+          <span class="ico">🌙</span><span class="label">Dark</span></button>
       </div>
     </header>
 
