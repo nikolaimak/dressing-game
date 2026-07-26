@@ -21,15 +21,6 @@ import {
 export const SCENE = { w: 960, h: 560, floorY: 442 };
 const PAPER = '#fffdf6';
 
-export const PALETTES = [
-  { id: 'paper', name: 'Paper', wall: '#fdfbf2', floor: '#f1ecdd', tint: '#8a5a25' },
-  { id: 'rose', name: 'Rose', wall: '#fce6ea', floor: '#f6d6cf', tint: '#d1467c' },
-  { id: 'sky', name: 'Sky', wall: '#e3eefb', floor: '#dbe6f2', tint: '#2b6cb0' },
-  { id: 'mint', name: 'Mint', wall: '#e2f3e8', floor: '#d8ead9', tint: '#2f8f60' },
-  { id: 'butter', name: 'Butter', wall: '#fcf2d8', floor: '#f3e6c4', tint: '#c98a12' },
-  { id: 'lilac', name: 'Lilac', wall: '#eee5f7', floor: '#e3daf0', tint: '#7a4bbd' },
-];
-
 /* --------------------------------------------------------------- surfaces */
 
 export const WALL_PATTERNS = [
@@ -37,10 +28,10 @@ export const WALL_PATTERNS = [
   {
     id: 'stripes',
     name: 'Stripes',
-    draw: () => {
+    draw: (c = INK) => {
       let s = '';
       for (let x = 40; x < SCENE.w; x += 62) {
-        s += stroke([[x, 0], [x + 6, SCENE.floorY]], { w: 5, seed: 800 + x, color: INK, opacity: 0.35 });
+        s += stroke([[x, 0], [x + 6, SCENE.floorY]], { w: 5, seed: 800 + x, color: c, opacity: 0.35 });
       }
       return s;
     },
@@ -48,12 +39,12 @@ export const WALL_PATTERNS = [
   {
     id: 'dots',
     name: 'Dots',
-    draw: () => {
+    draw: (c = INK) => {
       const rand = rng(811);
       let s = '';
       for (let y = 30; y < SCENE.floorY; y += 56) {
         for (let x = 30 + ((y / 56) % 2) * 28; x < SCENE.w; x += 56) {
-          s += `<g opacity="0.4">${blob(x, y, 5, rand, INK)}</g>`;
+          s += `<g opacity="0.4">${blob(x, y, 5, rand, c)}</g>`;
         }
       }
       return s;
@@ -62,12 +53,12 @@ export const WALL_PATTERNS = [
   {
     id: 'stars',
     name: 'Stars',
-    draw: () => {
+    draw: (c = INK) => {
       const rand = rng(813);
       let s = '';
       for (let y = 40; y < SCENE.floorY - 20; y += 90) {
         for (let x = 50 + ((y / 90) % 2) * 45; x < SCENE.w; x += 90) {
-          s += `<g opacity="0.35">${star(x, y, 12, 5, 815 + x + y, INK)}</g>`;
+          s += `<g opacity="0.35">${star(x, y, 12, 5, 815 + x + y, c)}</g>`;
         }
       }
       return s;
@@ -76,13 +67,13 @@ export const WALL_PATTERNS = [
   {
     id: 'bricks',
     name: 'Bricks',
-    draw: () => {
+    draw: (c = INK) => {
       let s = '';
       let row = 0;
       for (let y = 40; y < SCENE.floorY; y += 44, row++) {
-        s += stroke([[0, y], [SCENE.w, y]], { w: 4, seed: 820 + y, color: INK, opacity: 0.3 });
+        s += stroke([[0, y], [SCENE.w, y]], { w: 4, seed: 820 + y, color: c, opacity: 0.3 });
         for (let x = (row % 2) * 60; x < SCENE.w; x += 120) {
-          s += stroke([[x, y], [x, y + 44]], { w: 4, seed: 830 + x + y, color: INK, opacity: 0.3 });
+          s += stroke([[x, y], [x, y + 44]], { w: 4, seed: 830 + x + y, color: c, opacity: 0.3 });
         }
       }
       return s;
@@ -95,19 +86,19 @@ export const FLOOR_PATTERNS = [
   {
     id: 'boards',
     name: 'Boards',
-    draw: () => {
+    draw: (c = INK) => {
       let s = '';
       for (let x = -120; x < SCENE.w + 200; x += 96) {
-        s += stroke([[x + 100, SCENE.floorY], [x - 30, SCENE.h]], { w: 4, seed: 840 + x, color: INK, opacity: 0.4 });
+        s += stroke([[x + 100, SCENE.floorY], [x - 30, SCENE.h]], { w: 4, seed: 840 + x, color: c, opacity: 0.4 });
       }
-      s += stroke([[0, SCENE.floorY + 46], [SCENE.w, SCENE.floorY + 46]], { w: 4, seed: 845, color: INK, opacity: 0.35 });
+      s += stroke([[0, SCENE.floorY + 46], [SCENE.w, SCENE.floorY + 46]], { w: 4, seed: 845, color: c, opacity: 0.35 });
       return s;
     },
   },
   {
     id: 'checker',
     name: 'Checker',
-    draw: () => {
+    draw: (c = INK) => {
       let s = '';
       let row = 0;
       for (let y = SCENE.floorY; y < SCENE.h; y += 40, row++) {
@@ -120,7 +111,7 @@ export const FLOOR_PATTERNS = [
               [x + w - 8, y + 40],
               [x - 8, y + 40],
             ],
-            { seed: 850 + x + y, color: INK }
+            { seed: 850 + x + y, color: c }
           )}</g>`;
         }
       }
@@ -130,13 +121,13 @@ export const FLOOR_PATTERNS = [
   {
     id: 'tiles',
     name: 'Tiles',
-    draw: () => {
+    draw: (c = INK) => {
       let s = '';
       for (let y = SCENE.floorY + 24; y < SCENE.h; y += 34) {
-        s += stroke([[0, y], [SCENE.w, y]], { w: 4, seed: 860 + y, color: INK, opacity: 0.35 });
+        s += stroke([[0, y], [SCENE.w, y]], { w: 4, seed: 860 + y, color: c, opacity: 0.35 });
       }
       for (let x = 0; x < SCENE.w; x += 90) {
-        s += stroke([[x, SCENE.floorY], [x - 40, SCENE.h]], { w: 4, seed: 870 + x, color: INK, opacity: 0.3 });
+        s += stroke([[x, SCENE.floorY], [x - 40, SCENE.h]], { w: 4, seed: 870 + x, color: c, opacity: 0.3 });
       }
       return s;
     },
@@ -540,6 +531,215 @@ export const DECOR = [
       let s = stroke([[0, -60], [0, 0]], { w: 5, seed: 1121 });
       s += star(0, 40, 44, 5, 1123);
       s += beads([[-40, 92], [0, 108], [40, 92]], { r: 4.5, gap: 14, seed: 1125 });
+      return s;
+    },
+  },
+  {
+    id: 'fireplace',
+    name: 'Fireplace',
+    at: [480, 436],
+    box: [-120, -210, 240, 230],
+    draw: () => {
+      const outer = [
+        [-104, -190],
+        [104, -190],
+        [104, 12],
+        [-104, 12],
+      ];
+      let s = `<path d="M -104 -190 L 104 -190 L 104 12 L -104 12 Z" fill="${PAPER}"/>`;
+      s += stroke(outer, { w: 10, closed: true, seed: 1141 });
+      s += solid(
+        [
+          [-118, -208],
+          [118, -208],
+          [112, -186],
+          [-112, -186],
+        ],
+        { seed: 1143 }
+      );
+      const mouth = [
+        [-66, -120],
+        [66, -120],
+        [66, 12],
+        [-66, 12],
+      ];
+      s += solid(mouth, { seed: 1145 });
+      // logs and flames
+      s += stroke([[-40, -6], [40, -14]], { w: 10, seed: 1147, color: PAPER });
+      s += stroke([[-36, -22], [34, -28]], { w: 9, seed: 1149, color: PAPER });
+      [[-24, -46], [4, -62], [30, -44]].forEach(([x, y], i) => {
+        s += stroke(
+          [
+            [x, y + 26],
+            [x - 14, y],
+            [x, y - 24],
+            [x + 14, y],
+          ],
+          { w: 6, closed: true, seed: 1151 + i, color: PAPER }
+        );
+      });
+      for (let x = -96; x <= 84; x += 34) {
+        s += stroke([[x, -184], [x, -128]], { w: 4, seed: 1161 + x, opacity: 0.45 });
+      }
+      s += stroke([[-104, -128], [104, -128]], { w: 5, seed: 1169, opacity: 0.45 });
+      return s;
+    },
+  },
+  {
+    id: 'armchair',
+    name: 'Armchair',
+    at: [790, 436],
+    box: [-110, -190, 220, 210],
+    draw: () => {
+      const back = [
+        [-74, -172],
+        [74, -172],
+        [82, -60],
+        [-82, -60],
+      ];
+      let s = scribble(back, { gap: 11, w: 4, angle: -74, seed: 1171, edge: 8 });
+      s += solid(
+        [
+          [-92, -70],
+          [92, -70],
+          [96, -18],
+          [-96, -18],
+        ],
+        { seed: 1173, edge: 6 }
+      );
+      s += hatch(
+        [
+          [-96, -74],
+          [-58, -74],
+          [-54, -16],
+          [-96, -16],
+        ],
+        { gap: 10, w: 4, angle: 80, seed: 1175, edge: 6 }
+      );
+      s += hatch(
+        [
+          [58, -74],
+          [96, -74],
+          [96, -16],
+          [54, -16],
+        ],
+        { gap: 10, w: 4, angle: 80, seed: 1177, edge: 6 }
+      );
+      s += stroke([[-76, -18], [-72, 14]], { w: 9, seed: 1179 });
+      s += stroke([[76, -18], [72, 14]], { w: 9, seed: 1181 });
+      return s;
+    },
+  },
+  {
+    id: 'dog',
+    name: 'Dog',
+    at: [200, 496],
+    box: [-90, -90, 180, 120],
+    draw: () => {
+      let s = solid(
+        [
+          [-46, -26],
+          [-10, -38],
+          [30, -24],
+          [34, 14],
+          [-46, 14],
+        ],
+        { seed: 1191 }
+      );
+      s += solid(ellipsePts(-56, -54, 26, 22, 16), { seed: 1193 });
+      s += solid(
+        [
+          [-78, -66],
+          [-64, -74],
+          [-58, -40],
+          [-74, -38],
+        ],
+        { seed: 1195 }
+      );
+      s += stroke([[-78, -48], [-88, -44]], { w: 6, seed: 1197 });
+      s += dot(-64, -56, 4.5, 1199, PAPER);
+      s += dot(-46, -54, 4.5, 1201, PAPER);
+      s += stroke([[34, 4], [58, -20], [50, -46]], { w: 8, seed: 1203 });
+      s += stroke([[-34, 14], [-34, 28]], { w: 8, seed: 1205 });
+      s += stroke([[20, 14], [22, 28]], { w: 8, seed: 1207 });
+      return s;
+    },
+  },
+  {
+    id: 'birdcage',
+    name: 'Bird Cage',
+    at: [660, 150],
+    box: [-70, -80, 140, 220],
+    draw: () => {
+      let s = stroke([[0, -76], [0, -40]], { w: 5, seed: 1211 });
+      s += stroke(arcPts(0, -40, 22, 18, Math.PI, Math.PI * 2, 10), { w: 6, seed: 1213 });
+      const cage = [
+        [-44, -34],
+        [44, -34],
+        [50, 74],
+        [-50, 74],
+      ];
+      s += `<path d="M -44 -34 L 44 -34 L 50 74 L -50 74 Z" fill="${PAPER}"/>`;
+      s += stroke(cage, { w: 8, closed: true, seed: 1215 });
+      for (let x = -30; x <= 30; x += 20) {
+        s += stroke([[x, -32], [x + x * 0.14, 72]], { w: 4, seed: 1217 + x });
+      }
+      s += stroke([[-47, 26], [47, 26]], { w: 4, seed: 1225 });
+      s += solid(ellipsePts(4, 34, 15, 13, 14), { seed: 1227 });
+      s += solid(
+        [
+          [16, 26],
+          [30, 22],
+          [22, 34],
+        ],
+        { seed: 1229 }
+      );
+      s += stroke([[-6, 46], [-6, 58]], { w: 4, seed: 1231 });
+      s += beads([[-40, 78], [0, 92], [40, 78]], { r: 4, gap: 13, seed: 1233 });
+      return s;
+    },
+  },
+  {
+    id: 'floor-lamp',
+    name: 'Floor Lamp',
+    at: [370, 436],
+    box: [-60, -230, 120, 250],
+    draw: () => {
+      let s = stroke([[0, -170], [0, 6]], { w: 8, seed: 1241 });
+      s += stroke([[-34, 14], [34, 14]], { w: 10, seed: 1243 });
+      const shade = [
+        [-46, -166],
+        [46, -166],
+        [30, -222],
+        [-30, -222],
+      ];
+      s += hatch(shade, { gap: 11, w: 4, angle: 76, seed: 1245, edge: 8 });
+      s += beads([[-44, -160], [0, -150], [44, -160]], { r: 4.5, gap: 13, seed: 1247 });
+      return s;
+    },
+  },
+  {
+    id: 'book-stack',
+    name: 'Book Stack',
+    at: [280, 496],
+    box: [-70, -100, 140, 120],
+    draw: () => {
+      let s = '';
+      const rows = [
+        [-52, -2, 104, 22, true],
+        [-44, -26, 92, 22, false],
+        [-36, -50, 76, 22, true],
+        [-24, -74, 58, 22, false],
+      ];
+      rows.forEach(([x, y, w, h, filled], i) => {
+        const box = [
+          [x, y - h],
+          [x + w, y - h],
+          [x + w, y],
+          [x, y],
+        ];
+        s += filled ? solid(box, { seed: 1251 + i }) : hatch(box, { gap: 8, w: 3.4, angle: 0, seed: 1261 + i, edge: 6 });
+      });
       return s;
     },
   },

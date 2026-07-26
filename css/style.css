@@ -240,6 +240,133 @@ body {
   margin-bottom: 16px;
 }
 
+/* ------------------------------------------------------------------ paint */
+
+.paint {
+  border: 3px dashed var(--ink);
+  border-radius: 16px;
+  padding: 8px 10px 10px;
+  margin-bottom: 14px;
+  background: #fffdf3;
+}
+
+.paint.off {
+  opacity: 0.55;
+}
+
+.paint.off .dot {
+  pointer-events: none;
+}
+
+.paint-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.paint-label {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker {
+  position: relative;
+  width: 34px;
+  height: 26px;
+  flex: none;
+  border: 3px solid var(--ink);
+  border-radius: 9px;
+  overflow: hidden;
+  cursor: pointer;
+  background: conic-gradient(#e02424, #f4a300, #7cb518, #0d9488, #2563eb, #8b5cf6, #f06292, #e02424);
+}
+
+.picker input {
+  position: absolute;
+  inset: -6px;
+  width: 200%;
+  height: 200%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.picker span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.dots {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 4px;
+}
+
+.dot {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: none;
+  transition: transform 0.08s ease;
+}
+
+.dot:hover {
+  transform: scale(1.18);
+}
+
+.dot.on {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.surface-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.surface {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  padding: 3px 8px;
+  cursor: pointer;
+  background: var(--paper);
+}
+
+.surface input {
+  width: 30px;
+  height: 22px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.card.sel {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .section h3 {
   margin: 6px 0 8px;
   font-size: 14px;
@@ -309,10 +436,19 @@ body {
   .grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  .dots {
+    grid-template-columns: repeat(14, 1fr);
+    gap: 5px;
+  }
 }
 
 @media (max-width: 520px) {
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dots {
+    grid-template-columns: repeat(7, 1fr);
   }
 }

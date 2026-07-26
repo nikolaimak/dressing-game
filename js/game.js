@@ -1,28 +1,41 @@
-// Game: scene assembly, tray UI, dressing + room decorating.
+// Game: scene assembly, tray UI, dressing, painting and room decorating.
 
-import { INK, stroke, ellipsePts, uid } from './marker.js';
+import { INK, PAPER, stroke, ellipsePts, uid, recolour } from './marker.js';
 import { VB, body } from './figures.js';
 import { CATALOG, SLOTS, SLOT_ORDER, findItem } from './wardrobe.js';
-import { SCENE, PALETTES, WALL_PATTERNS, FLOOR_PATTERNS, DECOR, findDecor } from './decor.js';
+import { SCENE, WALL_PATTERNS, FLOOR_PATTERNS, DECOR, findDecor } from './decor.js';
+import { COLOURS, ROOM_THEMES, themeById, randomColour, contrastInk, isDark } from './colours.js';
 
-const STORE_KEY = 'marker-dressup-v1';
+const STORE_KEY = 'marker-dressup-v2';
 const FIGURE_SCALE = 0.9;
 const FIGURE_X = { lady: 300, gent: 660 };
 const FEET_Y = 470;
 
 const KIND_LABEL = { lady: 'Lady', gent: 'Gentleman' };
 
+// On a dark wall or floor the drawing flips to chalk-on-blackboard so that
+// unpainted (plain ink) figures and decorations stay readable.
+const CHALK = '#f4f1e6';
+const DARK_PAPER = '#22242f';
+
+function skin(markup, background) {
+  return isDark(background) ? markup.split(INK).join(CHALK).split(PAPER).join(DARK_PAPER) : markup;
+}
+
 const emptyLook = () => ({ outfit: null, head: null, neck: null, hands: null, feet: null, extra: null });
 
 const state = {
   tab: 'lady',
   slot: 'outfit',
-  colour: false,
-  palette: 'paper',
+  theme: 'paper',
+  wallColor: ROOM_THEMES[0].wall,
+  floorColor: ROOM_THEMES[0].floor,
   wall: 'plain',
   floor: 'plain',
   looks: { lady: emptyLook(), gent: emptyLook() },
+  tints: { lady: emptyLook(), gent: emptyLook() },
   decor: [],
+  selectedDecor: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -33,20 +46,16 @@ const hintEl = $('#hint');
 
 /* ------------------------------------------------------------------ state */
 
-function palette() {
-  return PALETTES.find((p) => p.id === state.palette) || PALETTES[0];
-}
-
-function paint() {
-  const p = palette();
-  return { fill: state.colour ? p.tint : INK, ink: INK };
+/** Paint for one worn garment: its own colour, falling back to plain ink. */
+function paintFor(kind, slot) {
+  return { fill: state.tints[kind][slot] || INK, ink: INK };
 }
 
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
   } catch (e) {
-    /* storage unavailable — game still works */
+    /* storage unavailable — the game still works */
   }
 }
 
@@ -55,10 +64,15 @@ function load() {
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw) return;
     const data = JSON.parse(raw);
-    Object.assign(state, {
-      ...state,
-      ...data,
-      looks: { lady: { ...emptyLook(), ...(data.looks?.lady || {}) }, gent: { ...emptyLook(), ...(data.looks?.gent || {}) } },
+    Object.assign(state, data, {
+      looks: {
+        lady: { ...emptyLook(), ...(data.looks?.lady || {}) },
+        gent: { ...emptyLook(), ...(data.looks?.gent || {}) },
+      },
+      tints: {
+        lady: { ...emptyLook(), ...(data.tints?.lady || {}) },
+        gent: { ...emptyLook(), ...(data.tints?.gent || {}) },
+      },
       decor: Array.isArray(data.decor) ? data.decor : [],
     });
     state.tab = data.tab === 'room' || data.tab === 'gent' ? data.tab : 'lady';
@@ -70,17 +84,16 @@ function load() {
 /* ------------------------------------------------------------------ scene */
 
 function figureSvg(kind) {
-  const P = paint();
   let inner = body(kind);
   for (const slot of SLOT_ORDER) {
     const id = state.looks[kind][slot];
     if (!id) continue;
     const item = findItem(kind, slot, id);
-    if (item) inner += item.draw(P);
+    if (item) inner += item.draw(paintFor(kind, slot));
   }
   const tx = FIGURE_X[kind] - (VB.w / 2) * FIGURE_SCALE;
   const ty = FEET_Y - 414 * FIGURE_SCALE;
-  return `<g class="figure" data-kind="${kind}" transform="translate(${tx} ${ty}) scale(${FIGURE_SCALE})">${inner}
+  return `<g class="figure" data-kind="${kind}" transform="translate(${tx} ${ty}) scale(${FIGURE_SCALE})">${skin(inner, state.wallColor)}
     <rect x="0" y="-40" width="${VB.w}" height="${VB.h + 20}" fill="transparent"/></g>`;
 }
 
@@ -89,40 +102,51 @@ function decorSvg() {
     .map((d) => {
       const def = findDecor(d.id);
       if (!def) return '';
-      return `<g class="decor" data-uid="${d.uid}" transform="translate(${d.x} ${d.y})">${def.draw()}
+      const bg = d.y > SCENE.floorY ? state.floorColor : state.wallColor;
+      return `<g class="decor" data-uid="${d.uid}" transform="translate(${d.x} ${d.y})">${skin(recolour(def.draw(), d.color), bg)}
         <rect x="${def.box[0]}" y="${def.box[1]}" width="${def.box[2]}" height="${def.box[3]}" fill="transparent"/></g>`;
     })
     .join('');
 }
 
 function selectionSvg() {
-  if (state.tab === 'room') return '';
+  const ink = contrastInk(state.wallColor);
+  if (state.tab === 'room') {
+    const sel = state.decor.find((d) => d.uid === state.selectedDecor);
+    if (!sel) return '';
+    const def = findDecor(sel.id);
+    if (!def) return '';
+    return `<g id="pick" pointer-events="none"><rect x="${sel.x + def.box[0] - 6}" y="${sel.y + def.box[1] - 6}"
+      width="${def.box[2] + 12}" height="${def.box[3] + 12}" rx="16" fill="none" stroke="${ink}"
+      stroke-width="4" stroke-dasharray="13 11" opacity="0.6"/></g>`;
+  }
   const x = FIGURE_X[state.tab];
-  const label = KIND_LABEL[state.tab];
+  const floorInk = contrastInk(state.floorColor);
   return `<g id="pick" pointer-events="none">
-    ${stroke(ellipsePts(x, FEET_Y + 10, 92, 20, 22), { w: 5, closed: true, seed: 1211, color: INK, opacity: 0.55 })}
+    ${stroke(ellipsePts(x, FEET_Y + 10, 92, 20, 22), { w: 5, closed: true, seed: 1211, color: floorInk, opacity: 0.55 })}
     <text x="${x}" y="${FEET_Y + 62}" text-anchor="middle" font-size="24"
-      font-family="Comic Sans MS, Chalkboard SE, Segoe Print, sans-serif" fill="${INK}" opacity="0.55">${label}</text>
+      font-family="Comic Sans MS, Chalkboard SE, Segoe Print, sans-serif" fill="${floorInk}" opacity="0.55">${KIND_LABEL[state.tab]}</text>
   </g>`;
 }
 
 function renderScene() {
-  const p = palette();
   const wall = WALL_PATTERNS.find((w) => w.id === state.wall) || WALL_PATTERNS[0];
   const floor = FLOOR_PATTERNS.find((f) => f.id === state.floor) || FLOOR_PATTERNS[0];
+  const wallInk = contrastInk(state.wallColor);
+  const floorInk = contrastInk(state.floorColor);
   const shadow = ['lady', 'gent']
     .map(
       (k) =>
-        `<ellipse cx="${FIGURE_X[k]}" cy="${FEET_Y + 8}" rx="86" ry="15" fill="${INK}" opacity="0.12"/>`
+        `<ellipse cx="${FIGURE_X[k]}" cy="${FEET_Y + 8}" rx="86" ry="15" fill="${floorInk}" opacity="0.12"/>`
     )
     .join('');
 
   svg.innerHTML = `
-    <rect x="0" y="0" width="${SCENE.w}" height="${SCENE.floorY}" fill="${p.wall}"/>
-    <rect x="0" y="${SCENE.floorY}" width="${SCENE.w}" height="${SCENE.h - SCENE.floorY}" fill="${p.floor}"/>
-    <g opacity="0.9">${wall.draw()}</g>
-    <g opacity="0.9">${floor.draw()}</g>
-    ${stroke([[0, SCENE.floorY], [SCENE.w, SCENE.floorY]], { w: 7, seed: 1201, color: INK })}
+    <rect x="0" y="0" width="${SCENE.w}" height="${SCENE.floorY}" fill="${state.wallColor}"/>
+    <rect x="0" y="${SCENE.floorY}" width="${SCENE.w}" height="${SCENE.h - SCENE.floorY}" fill="${state.floorColor}"/>
+    <g opacity="0.9">${wall.draw(wallInk)}</g>
+    <g opacity="0.9">${floor.draw(floorInk)}</g>
+    ${stroke([[0, SCENE.floorY], [SCENE.w, SCENE.floorY]], { w: 7, seed: 1201, color: floorInk })}
     <g id="decorLayer">${decorSvg()}</g>
     ${shadow}
     ${figureSvg('lady')}
@@ -135,7 +159,7 @@ function renderScene() {
         [SCENE.w - 6, SCENE.h - 6],
         [6, SCENE.h - 6],
       ],
-      { w: 8, closed: true, seed: 1203, color: INK }
+      { w: 8, closed: true, seed: 1203, color: wallInk }
     )}
   `;
 }
@@ -147,9 +171,9 @@ function itemPreview(item, P) {
   return `<svg class="thumb" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${item.draw(P)}</svg>`;
 }
 
-function decorPreview(def) {
+function decorPreview(def, colour) {
   const [x, y, w, h] = def.box;
-  return `<svg class="thumb" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${def.draw()}</svg>`;
+  return `<svg class="thumb" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${recolour(def.draw(), colour)}</svg>`;
 }
 
 function renderTabs() {
@@ -158,37 +182,78 @@ function renderTabs() {
     { id: 'gent', label: '🎩 Gentleman' },
     { id: 'room', label: '🏠 Room' },
   ]
-    .map(
-      (t) =>
-        `<button class="tab${state.tab === t.id ? ' on' : ''}" data-tab="${t.id}">${t.label}</button>`
-    )
+    .map((t) => `<button class="tab${state.tab === t.id ? ' on' : ''}" data-tab="${t.id}">${t.label}</button>`)
     .join('');
+}
+
+/** What the paint swatches currently colour. */
+function paintTarget() {
+  if (state.tab === 'room') {
+    const sel = state.decor.find((d) => d.uid === state.selectedDecor);
+    if (!sel) return null;
+    const def = findDecor(sel.id);
+    return { name: def ? def.name : 'Decoration', colour: sel.color || INK };
+  }
+  const id = state.looks[state.tab][state.slot];
+  if (!id) return null;
+  const item = findItem(state.tab, state.slot, id);
+  return item ? { name: item.name, colour: state.tints[state.tab][state.slot] || INK } : null;
+}
+
+function paintPanel() {
+  const target = paintTarget();
+  const empty =
+    state.tab === 'room'
+      ? 'Tap a decoration in the room to paint it'
+      : `Put something on to paint it`;
+  const current = target ? target.colour.toLowerCase() : INK;
+  const dots = COLOURS.map(
+    (c) =>
+      `<button class="dot${current === c.hex.toLowerCase() ? ' on' : ''}" data-paint="${c.hex}"
+        style="background:${c.hex}" title="${c.name}" aria-label="${c.name}"></button>`
+  ).join('');
+  return `<div class="paint${target ? '' : ' off'}">
+    <div class="paint-head">
+      <span class="paint-label">${target ? `🖌 ${target.name}` : `🖌 ${empty}`}</span>
+      <label class="picker" title="Any colour you like">
+        <input type="color" id="paint-picker" value="${current}" ${target ? '' : 'disabled'} />
+        <span>＋</span>
+      </label>
+    </div>
+    <div class="dots">${dots}</div>
+  </div>`;
+}
+
+/** Replace the tray contents without losing the reader's place. */
+function setTray(html) {
+  const top = tray.scrollTop;
+  tray.innerHTML = html;
+  tray.scrollTop = top;
 }
 
 function renderTray() {
   if (state.tab === 'room') return renderRoomTray();
   const kind = state.tab;
-  const P = paint();
   const chips = SLOTS.map(
-    (s) =>
-      `<button class="chip${state.slot === s.id ? ' on' : ''}" data-slot="${s.id}">${s.icon} ${s.name}</button>`
+    (s) => `<button class="chip${state.slot === s.id ? ' on' : ''}" data-slot="${s.id}">${s.icon} ${s.name}</button>`
   ).join('');
   const items = CATALOG[kind][state.slot]
     .map((item) => {
       const on = state.looks[kind][state.slot] === item.id;
+      const P = on ? paintFor(kind, state.slot) : { fill: INK, ink: INK };
       return `<button class="card${on ? ' on' : ''}" draggable="true" data-item="${item.id}" data-slot="${item.slot}" data-kind="${kind}">
         ${itemPreview(item, P)}<span>${item.name}</span></button>`;
     })
     .join('');
-  tray.innerHTML = `<div class="chips">${chips}</div><div class="grid">${items}</div>`;
+  setTray(`<div class="chips">${chips}</div>${paintPanel()}<div class="grid">${items}</div>`);
   hintEl.textContent = `Tap a piece to dress the ${KIND_LABEL[kind].toLowerCase()} — tap again to take it off.`;
 }
 
 function renderRoomTray() {
-  const swatches = PALETTES.map(
-    (p) =>
-      `<button class="swatch${state.palette === p.id ? ' on' : ''}" data-palette="${p.id}" title="${p.name}">
-        <span style="background:${p.wall}"></span><span style="background:${p.floor}"></span></button>`
+  const themes = ROOM_THEMES.map(
+    (t) =>
+      `<button class="swatch${state.theme === t.id ? ' on' : ''}" data-theme="${t.id}" title="${t.name}">
+        <span style="background:${t.wall}"></span><span style="background:${t.floor}"></span></button>`
   ).join('');
   const walls = WALL_PATTERNS.map(
     (w) => `<button class="chip${state.wall === w.id ? ' on' : ''}" data-wall="${w.id}">${w.name}</button>`
@@ -197,16 +262,22 @@ function renderRoomTray() {
     (f) => `<button class="chip${state.floor === f.id ? ' on' : ''}" data-floor="${f.id}">${f.name}</button>`
   ).join('');
   const decor = DECOR.map((d) => {
-    const count = state.decor.filter((x) => x.id === d.id).length;
-    return `<button class="card${count ? ' on' : ''}" data-decor="${d.id}">
-      ${decorPreview(d)}<span>${d.name}${count > 1 ? ` ×${count}` : ''}</span></button>`;
+    const placed = state.decor.find((x) => x.id === d.id);
+    return `<button class="card${placed ? ' on' : ''}${placed && placed.uid === state.selectedDecor ? ' sel' : ''}" data-decor="${d.id}">
+      ${decorPreview(d, placed ? placed.color : null)}<span>${d.name}</span></button>`;
   }).join('');
-  tray.innerHTML = `
-    <div class="section"><h3>Colours</h3><div class="swatches">${swatches}</div></div>
-    <div class="section"><h3>Wall</h3><div class="chips">${walls}</div></div>
-    <div class="section"><h3>Floor</h3><div class="chips">${floors}</div></div>
-    <div class="section"><h3>Decorations</h3><div class="grid">${decor}</div></div>`;
-  hintEl.textContent = 'Tap to add decorations, drag them around the room, double-tap one to take it away.';
+  setTray(`
+    <div class="section"><h3>Room theme</h3><div class="swatches">${themes}</div>
+      <div class="surface-row">
+        <label class="surface">Wall <input type="color" id="wall-picker" value="${state.wallColor}" /></label>
+        <label class="surface">Floor <input type="color" id="floor-picker" value="${state.floorColor}" /></label>
+      </div>
+    </div>
+    <div class="section"><h3>Wall pattern</h3><div class="chips">${walls}</div></div>
+    <div class="section"><h3>Floor pattern</h3><div class="chips">${floors}</div></div>
+    ${paintPanel()}
+    <div class="section"><h3>Decorations</h3><div class="grid">${decor}</div></div>`);
+  hintEl.textContent = 'Tap to add decorations, drag them around, tap one to paint it, tap it twice to take it away.';
 }
 
 function renderAll() {
@@ -218,28 +289,26 @@ function renderAll() {
 /* ---------------------------------------------------------------- actions */
 
 function wear(kind, slot, id) {
-  state.looks[kind][slot] = state.looks[kind][slot] === id ? null : id;
+  const off = state.looks[kind][slot] === id;
+  state.looks[kind][slot] = off ? null : id;
+  if (off) state.tints[kind][slot] = null;
   save();
   renderTray();
   renderScene();
 }
 
-function addDecor(id) {
-  const def = findDecor(id);
-  if (!def) return;
-  if (state.decor.some((d) => d.id === id)) {
-    state.decor = state.decor.filter((d) => d.id !== id);
+function paint(colour) {
+  if (state.tab === 'room') {
+    const sel = state.decor.find((d) => d.uid === state.selectedDecor);
+    if (!sel) return;
+    sel.color = colour === INK ? null : colour;
   } else {
-    const spot = freeSpot(def, state.decor);
-    state.decor.push({ uid: uid('d'), id, x: spot.x, y: spot.y });
+    if (!state.looks[state.tab][state.slot]) return;
+    state.tints[state.tab][state.slot] = colour === INK ? null : colour;
   }
   save();
   renderTray();
   renderScene();
-}
-
-function pick(list) {
-  return list[Math.floor(Math.random() * list.length)];
 }
 
 function rectOf(def, x, y) {
@@ -252,8 +321,7 @@ function overlapArea(a, b) {
   return w > 0 && h > 0 ? w * h : 0;
 }
 
-const figureRects = () =>
-  ['lady', 'gent'].map((k) => ({ x: FIGURE_X[k] - 96, y: 110, w: 192, h: 366 }));
+const figureRects = () => ['lady', 'gent'].map((k) => ({ x: FIGURE_X[k] - 96, y: 110, w: 192, h: 366 }));
 
 /** Find the tidiest spot near a decoration's home position. */
 function freeSpot(def, placed) {
@@ -281,10 +349,35 @@ function freeSpot(def, placed) {
       let score = clash;
       for (const f of figures) score += overlapArea(r, f) * 0.5;
       score += (Math.abs(dx) + Math.abs(dy)) * 14;
-      if (!best || score < best.score) best = { score, x, y, clash };
+      if (!best || score < best.score) best = { score, x, y };
     }
   }
   return best ? { x: best.x, y: best.y } : { x: def.at[0], y: def.at[1] };
+}
+
+function addDecor(id) {
+  const def = findDecor(id);
+  if (!def) return;
+  const placed = state.decor.find((d) => d.id === id);
+  if (placed) return removeDecor(placed.uid);
+  const spot = freeSpot(def, state.decor);
+  const entry = { uid: uid('d'), id, x: spot.x, y: spot.y, color: null };
+  state.decor.push(entry);
+  state.selectedDecor = entry.uid;
+  save();
+  renderTray();
+  renderScene();
+}
+
+function pick(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function setTheme(id) {
+  const t = themeById(id);
+  state.theme = t.id;
+  state.wallColor = t.wall;
+  state.floorColor = t.floor;
 }
 
 function surprise() {
@@ -293,26 +386,42 @@ function surprise() {
       const list = CATALOG[kind][slot];
       const skip = (slot === 'extra' && Math.random() < 0.4) || (slot === 'neck' && Math.random() < 0.25);
       state.looks[kind][slot] = skip ? null : pick(list).id;
+      state.tints[kind][slot] = skip || Math.random() < 0.25 ? null : randomColour();
     }
   }
-  state.palette = pick(PALETTES).id;
+  setTheme(pick(ROOM_THEMES).id);
   state.wall = pick(WALL_PATTERNS).id;
   state.floor = pick(FLOOR_PATTERNS).id;
   const shuffled = [...DECOR].sort(() => Math.random() - 0.5).slice(0, 4 + Math.floor(Math.random() * 3));
   state.decor = [];
   for (const d of shuffled) {
     const spot = freeSpot(d, state.decor);
-    state.decor.push({ uid: uid('d'), id: d.id, x: spot.x, y: spot.y });
+    state.decor.push({ uid: uid('d'), id: d.id, x: spot.x, y: spot.y, color: Math.random() < 0.6 ? randomColour() : null });
   }
+  state.selectedDecor = null;
   save();
   renderAll();
 }
 
-function undress() {
+function rainbow() {
+  for (const kind of ['lady', 'gent']) {
+    for (const slot of Object.keys(state.looks[kind])) {
+      if (state.looks[kind][slot]) state.tints[kind][slot] = randomColour(state.tints[kind][slot]);
+    }
+  }
+  for (const d of state.decor) d.color = randomColour(d.color);
+  save();
+  renderTray();
+  renderScene();
+}
+
+function clearCurrent() {
   if (state.tab === 'room') {
     state.decor = [];
+    state.selectedDecor = null;
   } else {
     state.looks[state.tab] = emptyLook();
+    state.tints[state.tab] = emptyLook();
   }
   save();
   renderTray();
@@ -358,6 +467,9 @@ tabsEl.addEventListener('click', (e) => {
 });
 
 tray.addEventListener('click', (e) => {
+  const swatch = e.target.closest('[data-paint]');
+  if (swatch) return paint(swatch.dataset.paint);
+
   const slotBtn = e.target.closest('[data-slot]:not([data-item])');
   if (slotBtn) {
     state.slot = slotBtn.dataset.slot;
@@ -365,18 +477,14 @@ tray.addEventListener('click', (e) => {
     return;
   }
   const card = e.target.closest('[data-item]');
-  if (card) {
-    wear(card.dataset.kind, card.dataset.slot, card.dataset.item);
-    return;
-  }
+  if (card) return wear(card.dataset.kind, card.dataset.slot, card.dataset.item);
+
   const dec = e.target.closest('[data-decor]');
-  if (dec) {
-    addDecor(dec.dataset.decor);
-    return;
-  }
-  const pal = e.target.closest('[data-palette]');
-  if (pal) {
-    state.palette = pal.dataset.palette;
+  if (dec) return addDecor(dec.dataset.decor);
+
+  const theme = e.target.closest('[data-theme]');
+  if (theme) {
+    setTheme(theme.dataset.theme);
     save();
     renderTray();
     renderScene();
@@ -399,11 +507,31 @@ tray.addEventListener('click', (e) => {
   }
 });
 
-// drag a card onto the scene
+tray.addEventListener('input', (e) => {
+  if (e.target.id === 'paint-picker') return paint(e.target.value);
+  if (e.target.id === 'wall-picker') {
+    state.wallColor = e.target.value;
+    state.theme = null;
+    save();
+    renderScene();
+    return;
+  }
+  if (e.target.id === 'floor-picker') {
+    state.floorColor = e.target.value;
+    state.theme = null;
+    save();
+    renderScene();
+  }
+});
+
+// drag a card from the tray onto the scene
 tray.addEventListener('dragstart', (e) => {
   const card = e.target.closest('[data-item]');
   if (!card) return;
-  e.dataTransfer.setData('text/plain', JSON.stringify({ kind: card.dataset.kind, slot: card.dataset.slot, id: card.dataset.item }));
+  e.dataTransfer.setData(
+    'text/plain',
+    JSON.stringify({ kind: card.dataset.kind, slot: card.dataset.slot, id: card.dataset.item })
+  );
   e.dataTransfer.effectAllowed = 'copy';
 });
 
@@ -454,10 +582,26 @@ function targetAt(evt) {
 }
 
 let drag = null;
+let lastTap = { uid: null, time: 0 };
+
+function removeDecor(uid) {
+  state.decor = state.decor.filter((d) => d.uid !== uid);
+  if (state.selectedDecor === uid) state.selectedDecor = null;
+  lastTap = { uid: null, time: 0 };
+  save();
+  renderTray();
+  renderScene();
+}
 
 svg.addEventListener('pointerdown', (e) => {
   const hit = targetAt(e);
   if (hit.decor) {
+    if (state.selectedDecor !== hit.decor.uid) {
+      state.selectedDecor = hit.decor.uid;
+      save();
+      renderTray();
+      renderScene();
+    }
     const el = svg.querySelector(`.decor[data-uid="${hit.decor.uid}"]`);
     if (!el) return;
     const p = svgPoint(e);
@@ -483,50 +627,57 @@ svg.addEventListener('pointermove', (e) => {
   drag.entry.y = y;
   drag.moved = true;
   drag.el.setAttribute('transform', `translate(${Math.round(x)} ${Math.round(y)})`);
+  const pickEl = svg.querySelector('#pick rect');
+  if (pickEl) {
+    const def = findDecor(drag.entry.id);
+    pickEl.setAttribute('x', x + def.box[0] - 6);
+    pickEl.setAttribute('y', y + def.box[1] - 6);
+  }
 });
 
 function endDrag(e) {
   if (!drag) return;
+  const { entry, moved } = drag;
   drag.el.classList.remove('dragging');
-  if (drag.moved) save();
   drag = null;
   if (e && svg.hasPointerCapture?.(e.pointerId)) svg.releasePointerCapture(e.pointerId);
+  if (moved) {
+    lastTap = { uid: null, time: 0 };
+    save();
+    return;
+  }
+  // Double tap on the spot takes a decoration away. Detected by hand because
+  // pointerdown calls preventDefault (to drag), which suppresses dblclick.
+  const now = Date.now();
+  if (lastTap.uid === entry.uid && now - lastTap.time < 450) return removeDecor(entry.uid);
+  lastTap = { uid: entry.uid, time: now };
 }
 svg.addEventListener('pointerup', endDrag);
 svg.addEventListener('pointercancel', endDrag);
 
-svg.addEventListener('dblclick', (e) => {
-  const hit = targetAt(e);
-  if (!hit.decor) return;
-  state.decor = state.decor.filter((d) => d.uid !== hit.decor.uid);
-  save();
-  renderTray();
-  renderScene();
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+  if (state.tab !== 'room' || !state.selectedDecor) return;
+  if (/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) return;
+  e.preventDefault();
+  removeDecor(state.selectedDecor);
 });
 
+$('#btn-rainbow').addEventListener('click', rainbow);
 $('#btn-surprise').addEventListener('click', surprise);
-$('#btn-clear').addEventListener('click', undress);
+$('#btn-clear').addEventListener('click', clearCurrent);
 $('#btn-save').addEventListener('click', savePicture);
-$('#btn-colour').addEventListener('click', (e) => {
-  state.colour = !state.colour;
-  e.currentTarget.classList.toggle('on', state.colour);
-  e.currentTarget.setAttribute('aria-pressed', String(state.colour));
-  save();
-  renderTray();
-  renderScene();
-});
 
 /* ------------------------------------------------------------------ start */
 
 load();
-$('#btn-colour').classList.toggle('on', state.colour);
 if (!state.looks.lady.outfit && !state.looks.gent.outfit && !state.decor.length) {
   state.looks.lady = { ...emptyLook(), outfit: 'ball-gown', head: 'spike-crown', neck: 'bead-loop', feet: 'heels' };
   state.looks.gent = { ...emptyLook(), outfit: 'tailcoat', head: 'top-hat', neck: 'bow-tie', feet: 'buckle-shoes', extra: 'cane' };
   state.decor = [];
   for (const id of ['chandelier', 'window', 'portrait', 'rug']) {
     const def = findDecor(id);
-    state.decor.push({ uid: uid('d'), id, x: def.at[0], y: def.at[1] });
+    state.decor.push({ uid: uid('d'), id, x: def.at[0], y: def.at[1], color: null });
   }
 }
 renderAll();

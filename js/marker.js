@@ -7,6 +7,15 @@ export const uid = (p = 'm') => `${p}${++_uid}`;
 export const INK = '#15151a';
 export const PAPER = '#fffdf6';
 
+/**
+ * Repaint a generated marker drawing. Every primitive emits the ink colour as a
+ * literal, so swapping that one token recolours a whole object while leaving
+ * paper-white highlights (eyes, buckles, buttons) alone.
+ */
+export function recolour(svg, colour) {
+  return colour && colour !== INK ? svg.split(INK).join(colour) : svg;
+}
+
 export function rng(seed = 1) {
   let a = (seed >>> 0) || 1;
   return function () {

@@ -145,6 +145,44 @@ function shoeShape(x, y, dir, P, seed, style = 'flat') {
       { seed, color: P.fill, edge: 5, edgeColor: P.ink }
     );
   }
+  if (style === 'sandal') {
+    return (
+      solid(
+        [
+          [x - 12, y + 8],
+          [toe + dir * 4, y + 6],
+          [toe + dir * 4, y + 17],
+          [x - 12, y + 17],
+        ],
+        { seed, color: P.fill, edge: 5, edgeColor: P.ink }
+      ) +
+      stroke([[x - 8, y + 6], [x + dir * 6, y - 10]], { w: 6, seed: seed + 2, color: P.fill }) +
+      stroke([[x + dir * 12, y + 4], [x + dir * 2, y - 12]], { w: 6, seed: seed + 3, color: P.fill })
+    );
+  }
+  if (style === 'chunky') {
+    return (
+      solid(
+        [
+          [x - 13, y - 12],
+          [x + 13, y - 12],
+          [toe, y + 2],
+          [toe, y + 10],
+          [x - 13, y + 10],
+        ],
+        { seed, color: P.fill, edge: 5, edgeColor: P.ink }
+      ) +
+      solid(
+        [
+          [x - 15, y + 8],
+          [toe + dir * 3, y + 8],
+          [toe + dir * 3, y + 19],
+          [x - 15, y + 19],
+        ],
+        { seed: seed + 4, color: P.fill, edge: 5, edgeColor: P.ink }
+      )
+    );
+  }
   // flat
   return solid(
     [
@@ -294,6 +332,97 @@ const ladyOutfits = [
       );
     },
   },
+  {
+    id: 'swan-gown',
+    name: 'Swan Gown',
+    preview: [10, 96, 220, 340],
+    draw: (P) => {
+      const skirt = skirtPts(24, 194, 98, 386, 16);
+      return (
+        loops(skirt, { count: 11, w: 4.2, seed: 1301, color: P.fill, edge: 7, edgeColor: P.ink }) +
+        stroke(scallop(CX - 68, CX + 68, 322, 7, 13), { w: 5, seed: 1302, color: P.ink }) +
+        stroke(scallop(CX - 96, CX + 96, 390, 9, 14), { w: 5.5, seed: 1303, color: P.ink }) +
+        sleeves('lady', 'bell', P, 1304) +
+        solid(bodicePts('lady', { top: A.chestY - 26 }), { seed: 1305, color: P.fill }) +
+        beads([[CX - 30, A.shoulderY - 2], [CX, A.chestY - 22], [CX + 30, A.shoulderY - 2]], { r: 5, gap: 14, seed: 1306, color: P.ink })
+      );
+    },
+  },
+  {
+    id: 'harlequin',
+    name: 'Harlequin',
+    preview: [20, 100, 200, 320],
+    draw: (P) => {
+      const skirt = skirtPts(23, 196, 84, 382, 14);
+      const top = bodicePts('lady', { top: A.shoulderY + 2 });
+      return (
+        hatch(skirt, { gap: 24, w: 4, angle: 58, seed: 1311, color: P.fill, edge: 7, edgeColor: P.ink }) +
+        hatch(skirt, { gap: 24, w: 4, angle: -58, seed: 1312, color: P.fill, edge: 0, base: null }) +
+        sleeves('lady', 'puff', P, 1313) +
+        hatch(top, { gap: 16, w: 3.6, angle: 58, seed: 1314, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        hatch(top, { gap: 16, w: 3.6, angle: -58, seed: 1315, color: P.fill, edge: 0, base: null }) +
+        beads(scallop(CX - 82, CX + 82, 386, 6, 9), { r: 4.5, gap: 15, seed: 1316, color: P.ink })
+      );
+    },
+  },
+  {
+    id: 'winter-coat',
+    name: 'Winter Coat',
+    preview: [14, 92, 212, 320],
+    draw: (P) => {
+      const coat = [
+        [CX - 44, A.shoulderY - 4],
+        [CX - 38, A.waistY],
+        [CX - 60, 340],
+        [CX + 60, 340],
+        [CX + 38, A.waistY],
+        [CX + 44, A.shoulderY - 4],
+        [CX, A.shoulderY - 12],
+      ];
+      const fur = [
+        [CX - 62, 332],
+        [CX + 62, 332],
+        [CX + 62, 356],
+        [CX - 62, 356],
+      ];
+      const collar = [
+        [CX - 46, A.shoulderY - 16],
+        [CX + 46, A.shoulderY - 16],
+        [CX + 34, A.shoulderY + 16],
+        [CX, A.chestY - 4],
+        [CX - 34, A.shoulderY + 16],
+      ];
+      return (
+        solid(coat, { seed: 1321, color: P.fill, edge: 7, edgeColor: P.ink }) +
+        sleeves('lady', 'long', P, 1322) +
+        beads([[CX, A.chestY + 6], [CX, 326]], { r: 5.5, gap: 24, seed: 1323, color: PAPER }) +
+        scribble(fur, { gap: 8, w: 3.6, angle: 30, seed: 1324, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        scribble(collar, { gap: 8, w: 3.6, angle: 20, seed: 1325, color: P.fill, edge: 6, edgeColor: P.ink })
+      );
+    },
+  },
+  {
+    id: 'tulip-dress',
+    name: 'Tulip Dress',
+    preview: [28, 100, 184, 250],
+    draw: (P) => {
+      const skirt = [
+        [CX - 22, 194],
+        [CX - 58, 262],
+        [CX - 44, 306],
+        [CX, 296],
+        [CX + 44, 306],
+        [CX + 58, 262],
+        [CX + 22, 194],
+      ];
+      return (
+        loops(skirt, { count: 7, w: 4, seed: 1331, color: P.fill, edge: 7, edgeColor: P.ink }) +
+        sleeves('lady', 'short', P, 1332) +
+        solid(bodicePts('lady', { top: A.shoulderY }), { seed: 1333, color: P.fill }) +
+        beads([[CX - 30, 300], [CX, 292], [CX + 30, 300]], { r: 4.5, gap: 13, seed: 1334, color: P.ink })
+      );
+    },
+  },
 ];
 
 const ladyHead = [
@@ -401,6 +530,61 @@ const ladyHead = [
       );
     },
   },
+  {
+    id: 'veil',
+    name: 'Bridal Veil',
+    preview: [44, 0, 152, 170],
+    draw: (P) => {
+      const veil = [
+        [CX - 46, A.headCy - 28],
+        [CX - 56, A.headCy + 62],
+        [CX + 56, A.headCy + 62],
+        [CX + 46, A.headCy - 28],
+        [CX, A.headCy - 46],
+      ];
+      return (
+        hatch(veil, { gap: 15, w: 3, angle: 100, seed: 1341, color: P.fill, edge: 5, edgeColor: P.ink, base: null }) +
+        beads([[CX - 34, A.headCy - 34], [CX, A.headCy - 48], [CX + 34, A.headCy - 34]], { r: 5, gap: 14, seed: 1342, color: P.ink })
+      );
+    },
+  },
+  {
+    id: 'bonnet',
+    name: 'Bonnet',
+    preview: [44, 0, 152, 110],
+    draw: (P) => {
+      const dome = [
+        [CX - 36, A.headCy - 14],
+        ...arcPts(CX, A.headCy - 14, 36, 44, Math.PI, Math.PI * 2, 12),
+      ];
+      return (
+        scribble(dome, { gap: 9, w: 3.8, angle: -60, seed: 1351, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        solid(
+          [
+            [CX - 52, A.headCy - 18],
+            [CX + 52, A.headCy - 18],
+            [CX + 48, A.headCy - 6],
+            [CX - 48, A.headCy - 6],
+          ],
+          { seed: 1352, color: P.fill, edge: 5, edgeColor: P.ink }
+        ) +
+        beads([[CX - 46, A.headCy - 2], [CX - 54, A.headCy + 30]], { r: 4.5, gap: 13, seed: 1353, color: P.ink })
+      );
+    },
+  },
+  {
+    id: 'star-crown',
+    name: 'Star Crown',
+    preview: [50, 0, 140, 100],
+    draw: (P) => {
+      let s = stroke([[CX - 32, A.headCy - 24], [CX, A.headCy - 30], [CX + 32, A.headCy - 24]], { w: 9, seed: 1361, color: P.fill });
+      [[-26, -44], [0, -58], [26, -44]].forEach(([dx, dy], i) => {
+        s += stroke([[CX + dx, A.headCy - 26], [CX + dx, A.headCy + dy + 10]], { w: 4, seed: 1362 + i, color: P.ink });
+        s += star(CX + dx, A.headCy + dy, 13, 6, 1365 + i, P.ink);
+      });
+      return s;
+    },
+  },
 ];
 
 const ladyNeck = [
@@ -453,6 +637,33 @@ const ladyNeck = [
       return scribble(ring, { gap: 7, w: 3.6, angle: 20, seed: 355, color: P.fill, edge: 6, edgeColor: P.ink });
     },
   },
+  {
+    id: 'ribbon-bow',
+    name: 'Ribbon Bow',
+    preview: [62, 92, 116, 76],
+    draw: (P) => {
+      const wing = (dir) => [
+        [CX, A.chinY + 16],
+        [CX + dir * 28, A.chinY + 4],
+        [CX + dir * 30, A.chinY + 30],
+      ];
+      return (
+        stroke([[CX - 22, A.chinY + 10], [CX, A.chinY + 16], [CX + 22, A.chinY + 10]], { w: 8, seed: 1371, color: P.fill }) +
+        solid(wing(-1), { seed: 1372, color: P.fill, edge: 5, edgeColor: P.ink }) +
+        solid(wing(1), { seed: 1373, color: P.fill, edge: 5, edgeColor: P.ink }) +
+        blob(CX, A.chinY + 17, 8, rng(1374), P.ink)
+      );
+    },
+  },
+  {
+    id: 'pearl-collar',
+    name: 'Pearl Collar',
+    preview: [56, 92, 128, 80],
+    draw: (P) =>
+      beads([[CX - 30, A.neckY - 6], [CX, A.neckY + 8], [CX + 30, A.neckY - 6]], { r: 7, gap: 15, seed: 1381, color: P.fill }) +
+      beads([[CX - 34, A.neckY + 2], [CX, A.neckY + 24], [CX + 34, A.neckY + 2]], { r: 6, gap: 14, seed: 1382, color: P.fill }) +
+      beads([[CX - 38, A.neckY + 10], [CX, A.neckY + 40], [CX + 38, A.neckY + 10]], { r: 5, gap: 13, seed: 1383, color: P.fill }),
+  },
 ];
 
 const ladyHands = [
@@ -482,6 +693,20 @@ const ladyHands = [
       stroke(scallop(A.handL[0] - 8, A.handL[0] + 24, A.handL[1] - 34, 3, 9), { w: 5, seed: 385, color: P.ink }) +
       stroke(scallop(A.handR[0] - 24, A.handR[0] + 8, A.handR[1] - 34, 3, 9), { w: 5, seed: 387, color: P.ink }),
   },
+  {
+    id: 'lace-mitts',
+    name: 'Lace Mitts',
+    preview: [20, 180, 200, 140],
+    draw: (P) => {
+      const mitt = (from, to, seed, dir) =>
+        limb([from, to], P, 18, seed) +
+        stroke(scallop(to[0] - 16 + dir * 4, to[0] + 16 + dir * 4, from[1], 3, 9), { w: 5, seed: seed + 2, color: P.ink });
+      return (
+        mitt([A.elbowL[0] + 6, A.elbowL[1] - 16], [A.handL[0], A.handL[1] + 4], 1391, 1) +
+        mitt([A.elbowR[0] - 6, A.elbowR[1] - 16], [A.handR[0], A.handR[1] + 4], 1395, -1)
+      );
+    },
+  },
 ];
 
 const ladyFeet = [
@@ -507,6 +732,8 @@ const ladyFeet = [
       beads([[A.footLx - 18, A.ankleY - 2], [A.footLx + 8, A.ankleY - 6]], { r: 3.4, gap: 10, seed: 405, color: '#fffdf6' }) +
       beads([[A.footRx - 8, A.ankleY - 6], [A.footRx + 18, A.ankleY - 2]], { r: 3.4, gap: 10, seed: 407, color: '#fffdf6' }),
   },
+  { id: 'sandals', name: 'Sandals', preview: [66, 372, 108, 68], draw: pair((x, y, d, P, s) => shoeShape(x, y, d, P, s, 'sandal')) },
+  { id: 'clogs', name: 'Clogs', preview: [62, 366, 116, 74], draw: pair((x, y, d, P, s) => shoeShape(x, y, d, P, s, 'chunky')) },
 ];
 
 const ladyExtra = [
@@ -579,6 +806,65 @@ const ladyExtra = [
         }
       });
       return s;
+    },
+  },
+  {
+    id: 'mask',
+    name: 'Party Mask',
+    preview: [130, 190, 110, 120],
+    draw: (P) => {
+      const h = A.handR;
+      const cx = h[0] + 10;
+      const cy = h[1] - 40;
+      const shape = [
+        [cx - 34, cy - 6],
+        [cx - 26, cy - 22],
+        [cx, cy - 16],
+        [cx + 26, cy - 22],
+        [cx + 34, cy - 6],
+        [cx + 22, cy + 18],
+        [cx, cy + 10],
+        [cx - 22, cy + 18],
+      ];
+      return (
+        limb([[h[0] + 4, h[1] + 14], [cx - 6, cy + 12]], P, 6, 1401) +
+        scribble(shape, { gap: 8, w: 3.6, angle: 30, seed: 1402, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        solid(ellipsePts(cx - 15, cy - 4, 9, 7, 12), { seed: 1403, color: PAPER }) +
+        solid(ellipsePts(cx + 15, cy - 4, 9, 7, 12), { seed: 1404, color: PAPER })
+      );
+    },
+  },
+  {
+    id: 'wand',
+    name: 'Magic Wand',
+    preview: [140, 150, 100, 140],
+    draw: (P) => {
+      const h = A.handR;
+      const top = [h[0] + 26, h[1] - 66];
+      return limb([[h[0] + 6, h[1] + 14], top], P, 6, 1411) + star(top[0], top[1] - 8, 22, 6, 1412, P.ink);
+    },
+  },
+  {
+    id: 'lady-book',
+    name: 'Story Book',
+    preview: [136, 210, 104, 110],
+    draw: (P) => {
+      const h = A.handR;
+      const bx = h[0] + 4;
+      const by = h[1] + 22;
+      return (
+        solid(
+          [
+            [bx - 30, by - 20],
+            [bx + 30, by - 24],
+            [bx + 30, by + 16],
+            [bx - 30, by + 20],
+          ],
+          { seed: 1421, color: P.fill, edge: 6, edgeColor: P.ink }
+        ) +
+        stroke([[bx, by - 22], [bx, by + 18]], { w: 5, seed: 1422, color: PAPER }) +
+        beads([[bx - 22, by - 8], [bx - 6, by - 9]], { r: 3, gap: 9, seed: 1423, color: PAPER })
+      );
     },
   },
 ];
@@ -772,6 +1058,110 @@ const gentOutfits = [
       );
     },
   },
+  {
+    id: 'wizard-robe',
+    name: 'Wizard Robe',
+    preview: [12, 96, 216, 340],
+    draw: (P) => {
+      const robe = [
+        [CX - 40, A.shoulderY - 6],
+        [CX - 50, A.waistY],
+        [CX - 74, 396],
+        [CX + 74, 396],
+        [CX + 50, A.waistY],
+        [CX + 40, A.shoulderY - 6],
+        [CX, A.shoulderY - 16],
+      ];
+      return (
+        solid(robe, { seed: 1501, color: P.fill, edge: 7, edgeColor: P.ink }) +
+        sleeves('gent', 'bell', P, 1502) +
+        [
+          [CX - 34, 250],
+          [CX + 30, 290],
+          [CX - 20, 340],
+          [CX + 46, 356],
+          [CX + 6, 214],
+        ]
+          .map(([x, y], i) => star(x, y, 15, 6, 1503 + i, PAPER))
+          .join('') +
+        beads([[CX - 40, A.chestY + 6], [CX, A.chestY + 22], [CX + 40, A.chestY + 6]], { r: 5, gap: 14, seed: 1509, color: PAPER })
+      );
+    },
+  },
+  {
+    id: 'pirate',
+    name: 'Pirate',
+    preview: [22, 100, 196, 320],
+    draw: (P) => {
+      const top = bodicePts('gent', { top: A.shoulderY - 2, bottom: A.hipY + 6, pad: 5 });
+      const sash = [
+        [CX - 36, A.chestY + 16],
+        [CX + 34, A.waistY - 6],
+        [CX + 34, A.hipY + 14],
+        [CX - 36, A.waistY + 20],
+      ];
+      return (
+        solid(
+          [
+            [CX - 30, A.hipY + 2],
+            [CX + 30, A.hipY + 2],
+            [CX + 26, 322],
+            [CX - 26, 322],
+          ],
+          { seed: 1511, color: P.fill, edge: 6, edgeColor: P.ink }
+        ) +
+        stroke(scallop(CX - 27, CX + 27, 320, 4, 12), { w: 5, seed: 1512, color: P.ink }) +
+        sleeves('gent', 'short', P, 1513) +
+        hatch(top, { gap: 14, w: 6, angle: 0, seed: 1514, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        solid(sash, { seed: 1515, color: P.fill, edge: 5, edgeColor: P.ink }) +
+        dot(CX + 30, A.waistY + 10, 8, 1516, PAPER)
+      );
+    },
+  },
+  {
+    id: 'armour',
+    name: 'Armour',
+    preview: [20, 96, 200, 330],
+    draw: (P) => {
+      const chest = bodicePts('gent', { top: A.shoulderY - 6, bottom: A.hipY + 4, pad: 7 });
+      let s = trousers(P, { seed: 1521, w: 20 });
+      s += sleeves('gent', 'long', P, 1522);
+      s += solid(chest, { seed: 1523, color: P.fill, edge: 7, edgeColor: P.ink });
+      [A.chestY - 6, A.chestY + 22, A.waistY + 12].forEach((y, i) => {
+        s += stroke([[CX - 44, y], [CX, y + 8], [CX + 44, y]], { w: 5, seed: 1524 + i, color: PAPER });
+      });
+      s += beads([[CX - 42, A.shoulderY + 8], [CX + 42, A.shoulderY + 8]], { r: 4.5, gap: 18, seed: 1527, color: PAPER });
+      s += solid(ellipsePts(CX - 48, A.shoulderY + 10, 18, 15, 14), { seed: 1528, color: P.fill, edge: 5, edgeColor: P.ink });
+      s += solid(ellipsePts(CX + 48, A.shoulderY + 10, 18, 15, 14), { seed: 1529, color: P.fill, edge: 5, edgeColor: P.ink });
+      return s;
+    },
+  },
+  {
+    id: 'dungarees',
+    name: 'Dungarees',
+    preview: [24, 100, 192, 330],
+    draw: (P) => {
+      const bib = [
+        [CX - 28, A.chestY - 2],
+        [CX + 28, A.chestY - 2],
+        [CX + 30, A.hipY + 4],
+        [CX - 30, A.hipY + 4],
+      ];
+      return (
+        stroke(bodicePts('gent', { top: A.shoulderY - 2 }), { w: 6, closed: true, seed: 1531, color: P.ink }) +
+        stroke(armPath('gent', 'l'), { w: 15, seed: 1532, color: P.ink }) +
+        stroke(armPath('gent', 'l'), { w: 10, seed: 1533, color: PAPER }) +
+        stroke(armPath('gent', 'r'), { w: 15, seed: 1534, color: P.ink }) +
+        stroke(armPath('gent', 'r'), { w: 10, seed: 1535, color: PAPER }) +
+        trousers(P, { seed: 1536, w: 26, flare: 3 }) +
+        hatch(bib, { gap: 13, w: 4, angle: 90, seed: 1537, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        limb([[CX - 22, A.chestY], [CX - 26, A.shoulderY - 6]], P, 9, 1538) +
+        limb([[CX + 22, A.chestY], [CX + 26, A.shoulderY - 6]], P, 9, 1539) +
+        dot(CX - 24, A.chestY + 4, 6, 1540, PAPER) +
+        dot(CX + 24, A.chestY + 4, 6, 1541, PAPER)
+      );
+    },
+  },
 ];
 
 const gentHead = [
@@ -869,6 +1259,82 @@ const gentHead = [
       );
     },
   },
+  {
+    id: 'wizard-hat',
+    name: 'Wizard Hat',
+    preview: [40, 0, 160, 110],
+    draw: (P) => {
+      const cone = [
+        [CX - 34, A.headCy - 24],
+        [CX + 34, A.headCy - 24],
+        [CX + 30, A.headCy - 66],
+        [CX + 46, A.headCy - 104],
+        [CX + 8, A.headCy - 78],
+      ];
+      return (
+        solid(cone, { seed: 1551, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        solid(
+          [
+            [CX - 52, A.headCy - 28],
+            [CX + 52, A.headCy - 28],
+            [CX + 48, A.headCy - 14],
+            [CX - 48, A.headCy - 14],
+          ],
+          { seed: 1552, color: P.fill, edge: 5, edgeColor: P.ink }
+        ) +
+        star(CX + 6, A.headCy - 44, 12, 6, 1553, PAPER) +
+        star(CX + 26, A.headCy - 74, 9, 6, 1554, PAPER)
+      );
+    },
+  },
+  {
+    id: 'beret',
+    name: 'Beret',
+    preview: [50, 6, 140, 80],
+    draw: (P) => {
+      const cap = [
+        [CX - 38, A.headCy - 20],
+        ...arcPts(CX - 2, A.headCy - 22, 40, 30, Math.PI, Math.PI * 2, 12),
+        [CX + 40, A.headCy - 16],
+      ];
+      return (
+        scribble(cap, { gap: 9, w: 3.8, angle: 20, seed: 1561, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        stroke([[CX + 6, A.headCy - 52], [CX + 12, A.headCy - 62]], { w: 6, seed: 1562, color: P.ink })
+      );
+    },
+  },
+  {
+    id: 'helmet',
+    name: 'Helmet',
+    preview: [48, 0, 144, 110],
+    draw: (P) => {
+      const dome = [
+        [CX - 36, A.headCy - 6],
+        ...arcPts(CX, A.headCy - 6, 36, 40, Math.PI, Math.PI * 2, 12),
+      ];
+      let s = solid(dome, { seed: 1571, color: P.fill, edge: 6, edgeColor: P.ink });
+      s += solid(
+        [
+          [CX - 38, A.headCy - 10],
+          [CX + 38, A.headCy - 10],
+          [CX + 36, A.headCy + 2],
+          [CX - 36, A.headCy + 2],
+        ],
+        { seed: 1572, color: P.fill, edge: 5, edgeColor: P.ink }
+      );
+      s += stroke([[CX, A.headCy - 46], [CX, A.headCy - 74]], { w: 5, seed: 1573, color: P.ink });
+      s += scribble(
+        [
+          [CX - 16, A.headCy - 74],
+          [CX + 16, A.headCy - 74],
+          [CX + 22, A.headCy - 100],
+          [CX - 22, A.headCy - 100],
+        ],
+        { gap: 7, w: 3.4, angle: 80, seed: 1574, color: P.fill, edge: 5, edgeColor: P.ink }
+      );
+      return s;
+    },
+  },
 ];
 
 const gentNeck = [
@@ -926,6 +1392,37 @@ const gentNeck = [
       beads([[CX - 30, A.neckY], [CX, A.neckY + 44], [CX + 30, A.neckY]], { r: 5.5, gap: 15, seed: 643, color: P.fill }) +
       star(CX, A.neckY + 58, 16, 8, 645, P.ink),
   },
+  {
+    id: 'scarf',
+    name: 'Long Scarf',
+    preview: [56, 92, 128, 160],
+    draw: (P) => {
+      const ring = [
+        [CX - 26, A.neckY - 8],
+        [CX + 26, A.neckY - 8],
+        [CX + 24, A.neckY + 14],
+        [CX - 24, A.neckY + 14],
+      ];
+      const tail = [
+        [CX + 6, A.neckY + 10],
+        [CX + 26, A.neckY + 10],
+        [CX + 34, A.waistY + 22],
+        [CX + 12, A.waistY + 26],
+      ];
+      return (
+        hatch(tail, { gap: 12, w: 5, angle: 0, seed: 1581, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        hatch(ring, { gap: 12, w: 5, angle: 0, seed: 1582, color: P.fill, edge: 6, edgeColor: P.ink }) +
+        beads([[CX + 12, A.waistY + 26], [CX + 34, A.waistY + 22]], { r: 4, gap: 11, seed: 1583, color: P.ink })
+      );
+    },
+  },
+  {
+    id: 'gent-ruff',
+    name: 'Ruff',
+    preview: [52, 88, 136, 74],
+    draw: (P) =>
+      scribble(ellipsePts(CX, A.neckY - 2, 44, 19, 20), { gap: 7, w: 3.6, angle: 20, seed: 1591, color: P.fill, edge: 6, edgeColor: P.ink }),
+  },
 ];
 
 const gentHands = [
@@ -946,6 +1443,18 @@ const gentHands = [
       gloveShape([A.elbowR[0] - 6, A.elbowR[1] - 8], A.handR, P, 663) +
       stroke(teeth(A.elbowL[0] - 10, A.elbowL[0] + 22, A.elbowL[1] - 4, A.elbowL[1] - 22, 3), { w: 5, seed: 665, color: P.ink }) +
       stroke(teeth(A.elbowR[0] - 22, A.elbowR[0] + 10, A.elbowR[1] - 4, A.elbowR[1] - 22, 3), { w: 5, seed: 667, color: P.ink }),
+  },
+  {
+    id: 'mittens',
+    name: 'Mittens',
+    preview: [24, 200, 192, 130],
+    draw: (P) =>
+      limb([[A.handL[0] + 6, A.handL[1] - 22], A.handL], P, 22, 1601) +
+      solid(ellipsePts(A.handL[0] - 2, A.handL[1] + 12, 16, 17, 14), { seed: 1602, color: P.fill, edge: 5, edgeColor: P.ink }) +
+      limb([[A.handR[0] - 6, A.handR[1] - 22], A.handR], P, 22, 1603) +
+      solid(ellipsePts(A.handR[0] + 2, A.handR[1] + 12, 16, 17, 14), { seed: 1604, color: P.fill, edge: 5, edgeColor: P.ink }) +
+      beads([[A.handL[0] - 14, A.handL[1] - 20], [A.handL[0] + 14, A.handL[1] - 22]], { r: 3.4, gap: 10, seed: 1605, color: PAPER }) +
+      beads([[A.handR[0] - 14, A.handR[1] - 22], [A.handR[0] + 14, A.handR[1] - 20]], { r: 3.4, gap: 10, seed: 1606, color: PAPER }),
   },
 ];
 
@@ -978,6 +1487,8 @@ const gentFeet = [
       ),
   },
   { id: 'pointy-shoes', name: 'Pointy Shoes', preview: [60, 372, 120, 68], draw: pair((x, y, d, P, s) => shoeShape(x, y, d, P, s, 'point')) },
+  { id: 'gent-sandals', name: 'Sandals', preview: [66, 372, 108, 68], draw: pair((x, y, d, P, s) => shoeShape(x, y, d, P, s, 'sandal')) },
+  { id: 'work-boots', name: 'Work Boots', preview: [62, 362, 116, 78], draw: pair((x, y, d, P, s) => shoeShape(x, y, d, P, s, 'chunky')) },
 ];
 
 const gentExtra = [
@@ -1048,6 +1559,56 @@ const gentExtra = [
     draw: (P) =>
       stroke(ellipsePts(CX + 13, A.headCy - 4, 13, 13, 16), { w: 5, closed: true, seed: 707, color: P.ink }) +
       beads([[CX + 24, A.headCy + 4], [CX + 34, A.headCy + 40]], { r: 3.4, gap: 10, seed: 709, color: P.fill }),
+  },
+  {
+    id: 'sword',
+    name: 'Sword',
+    preview: [140, 120, 100, 190],
+    draw: (P) => {
+      const h = A.handR;
+      const tip = [h[0] + 44, h[1] - 130];
+      return (
+        limb([[h[0] + 2, h[1] + 22], tip], P, 9, 1611) +
+        stroke([[h[0] - 12, h[1] - 4], [h[0] + 22, h[1] - 18]], { w: 9, seed: 1612, color: P.ink }) +
+        blob(h[0] + 1, h[1] + 24, 9, rng(1613), P.ink)
+      );
+    },
+  },
+  {
+    id: 'gent-book',
+    name: 'Big Book',
+    preview: [132, 200, 108, 120],
+    draw: (P) => {
+      const h = A.handR;
+      const bx = h[0] + 2;
+      const by = h[1] + 24;
+      return (
+        solid(
+          [
+            [bx - 34, by - 24],
+            [bx + 34, by - 28],
+            [bx + 34, by + 18],
+            [bx - 34, by + 22],
+          ],
+          { seed: 1621, color: P.fill, edge: 6, edgeColor: P.ink }
+        ) +
+        stroke([[bx, by - 26], [bx, by + 20]], { w: 5, seed: 1622, color: PAPER }) +
+        star(bx + 18, by - 4, 10, 6, 1623, PAPER)
+      );
+    },
+  },
+  {
+    id: 'balloon',
+    name: 'Balloon',
+    preview: [140, 60, 100, 220],
+    draw: (P) => {
+      const h = A.handR;
+      const top = [h[0] + 34, h[1] - 150];
+      return (
+        stroke([[h[0] + 6, h[1] + 12], [h[0] + 26, h[1] - 70], [top[0], top[1] + 34]], { w: 3.6, seed: 1631, color: P.ink }) +
+        scribble(ellipsePts(top[0], top[1], 34, 40, 20), { gap: 9, w: 3.8, angle: -70, seed: 1632, color: P.fill, edge: 6, edgeColor: P.ink })
+      );
+    },
   },
 ];
 
