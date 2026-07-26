@@ -45,6 +45,16 @@
       </aside>
     </main>
 
+    <p id="toast" class="toast" role="status" hidden></p>
+
+    <div id="shot" class="shot" hidden role="dialog" aria-modal="true" aria-label="Your picture">
+      <div class="shot-box">
+        <p class="shot-tip" id="shot-tip">Press and hold the picture, then choose <b>Save to Photos</b>.</p>
+        <img id="shot-img" alt="The lady and the gentleman in their room" />
+        <button id="shot-close" class="tool">Close</button>
+      </div>
+    </div>
+
     <script type="module" src="js/game.js"></script>
     <script>
       if (location.protocol === 'file:') {

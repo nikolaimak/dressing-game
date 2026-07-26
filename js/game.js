@@ -490,20 +490,41 @@ function clearCurrent() {
   renderScene();
 }
 
-async function savePicture() {
+const SHOT_NAME = 'dressing-game.png';
+
+function sceneMarkup() {
   const clone = svg.cloneNode(true);
   clone.querySelector('#pick')?.remove();
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('width', SCENE.w * 2);
   clone.setAttribute('height', SCENE.h * 2);
-  const data = new XMLSerializer().serializeToString(clone);
-  const url = URL.createObjectURL(new Blob([data], { type: 'image/svg+xml;charset=utf-8' }));
-  const img = new Image();
-  await new Promise((res, rej) => {
-    img.onload = res;
-    img.onerror = rej;
-    img.src = url;
+  return new XMLSerializer().serializeToString(clone);
+}
+
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error('could not decode the drawing'));
+    img.src = src;
   });
+}
+
+async function sceneToCanvas() {
+  const markup = sceneMarkup();
+  let img;
+  // WebKit has long been unreliable about SVG served from a blob URL in an
+  // <img>, so try a data URL first and keep the blob URL as the fallback.
+  try {
+    img = await loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(markup));
+  } catch (e) {
+    const url = URL.createObjectURL(new Blob([markup], { type: 'image/svg+xml;charset=utf-8' }));
+    try {
+      img = await loadImage(url);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
   const canvas = document.createElement('canvas');
   canvas.width = SCENE.w * 2;
   canvas.height = SCENE.h * 2;
@@ -511,11 +532,108 @@ async function savePicture() {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  URL.revokeObjectURL(url);
+  return canvas;
+}
+
+function canvasToBlob(canvas) {
+  return new Promise((res, rej) => {
+    if (!canvas.toBlob) return rej(new Error('this browser cannot make a PNG'));
+    canvas.toBlob((b) => (b ? res(b) : rej(new Error('this browser cannot make a PNG'))), 'image/png');
+  });
+}
+
+let toastTimer = null;
+
+function toast(message, action) {
+  const el = $('#toast');
+  el.innerHTML = `<span>${message}</span>`;
+  if (action) {
+    const btn = document.createElement('button');
+    btn.textContent = action.label;
+    btn.addEventListener('click', action.run);
+    el.append(btn);
+  }
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.hidden = true;
+  }, action ? 8000 : 2600);
+}
+
+let shotUrl = null;
+
+/** How you save on a tablet: show the picture so it can be pressed and held. */
+function showPicture(src) {
+  $('#shot-tip').innerHTML = matchMedia('(any-pointer: coarse)').matches
+    ? 'Press and hold the picture, then <b>save it to your photos</b>.'
+    : 'Right-click the picture and choose <b>Save image as…</b>';
+  $('#shot-img').src = src;
+  $('#shot').hidden = false;
+}
+
+function closePicture() {
+  $('#shot').hidden = true;
+  $('#shot-img').removeAttribute('src');
+}
+
+async function savePicture() {
+  let canvas;
+  try {
+    canvas = await sceneToCanvas();
+  } catch (err) {
+    toast(`Sorry — ${err.message}.`);
+    return;
+  }
+
+  const touch = matchMedia('(any-pointer: coarse)').matches;
+
+  if (touch) {
+    // Safari on iOS and Chrome on Android can hand the file to the system share
+    // sheet, which is where "Save Image" lives.
+    try {
+      const blob = await canvasToBlob(canvas);
+      const file = new File([blob], SHOT_NAME, { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'The Dressing Game' });
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      // no file sharing (Chrome on iPad, older iOS) — show the picture instead
+    }
+    // A data URL, not a blob URL: WKWebView, which every iPad browser is built
+    // on, will not reliably save a blob-backed image from press-and-hold.
+    showPicture(pngSource(canvas));
+    return;
+  }
+
+  let blob;
+  try {
+    blob = await canvasToBlob(canvas);
+  } catch (err) {
+    showPicture(pngSource(canvas));
+    return;
+  }
+  if (shotUrl) URL.revokeObjectURL(shotUrl);
+  shotUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.download = 'dressing-game.png';
-  a.href = canvas.toDataURL('image/png');
+  a.href = shotUrl;
+  a.download = SHOT_NAME;
+  a.rel = 'noopener';
+  document.body.append(a);
   a.click();
+  a.remove();
+  toast('Picture saved 💾', { label: 'Show it', run: () => showPicture(shotUrl) });
+}
+
+function pngSource(canvas) {
+  try {
+    return canvas.toDataURL('image/png');
+  } catch (err) {
+    if (shotUrl) URL.revokeObjectURL(shotUrl);
+    shotUrl = URL.createObjectURL(new Blob([sceneMarkup()], { type: 'image/svg+xml;charset=utf-8' }));
+    return shotUrl;
+  }
 }
 
 /* ----------------------------------------------------------------- events */
@@ -773,6 +891,13 @@ $('#btn-rainbow').addEventListener('click', rainbow);
 $('#btn-surprise').addEventListener('click', surprise);
 $('#btn-clear').addEventListener('click', clearCurrent);
 $('#btn-save').addEventListener('click', savePicture);
+$('#shot-close').addEventListener('click', closePicture);
+$('#shot').addEventListener('click', (e) => {
+  if (e.target.id === 'shot') closePicture();
+});
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('#shot').hidden) closePicture();
+});
 
 /* ------------------------------------------------------------------ start */
 

@@ -36,7 +36,11 @@ which browsers only load over http.)
   to move it, tap it twice (or press Delete) to take it away.
 - **Rainbow** repaints everything at random. **Surprise!** dresses everyone and
   redecorates the room. **Clear** undresses the selected figure, or empties the room.
-  **Save** downloads the scene as a PNG.
+- **Save** makes a 1920×1120 PNG. On a computer it downloads. On a phone or tablet
+  it opens the system share sheet where "Save Image" lives — and where that is not
+  available (notably Chrome on iPad, which supports neither file sharing nor
+  download links) it shows the finished picture full screen so you can press and
+  hold it to save it to your photos.
 
 **Dark theme** — the 🌙 button in the toolbar switches the app itself between light
 and dark; it starts on whatever your device prefers and remembers your choice.
