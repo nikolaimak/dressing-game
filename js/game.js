@@ -586,8 +586,11 @@ async function savePicture() {
   }
 
   const touch = matchMedia('(any-pointer: coarse)').matches;
+  // Some sites embed the game in a sandboxed iframe, where a download link is
+  // silently ignored. Showing the picture always works.
+  const embedded = window.self !== window.top;
 
-  if (touch) {
+  if (touch || embedded) {
     // Safari on iOS and Chrome on Android can hand the file to the system share
     // sheet, which is where "Save Image" lives.
     try {
