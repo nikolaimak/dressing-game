@@ -423,6 +423,144 @@ const ladyOutfits = [
       );
     },
   },
+  {
+    id: 'bride-gown',
+    name: 'Bride Gown',
+    preview: [6, 96, 228, 344],
+    draw: (P) => {
+      const skirt = skirtPts(24, 196, 108, 392, 20);
+      const bodice = [
+        [CX - 40, A.shoulderY + 12],
+        [CX + 40, A.shoulderY + 12],
+        [CX + 26, A.waistY + 2],
+        [CX - 26, A.waistY + 2],
+      ];
+      let s = loops(skirt, { count: 12, w: 4, seed: 1701, color: P.fill, edge: 7, edgeColor: P.ink });
+      // petal hem, drawn as a row of scallops the width of the skirt
+      s += stroke(scallop(CX - 102, CX + 102, 358, 7, 18), { w: 5.5, seed: 1702, color: P.ink });
+      s += stroke(scallop(CX - 78, CX + 78, 300, 5, 16), { w: 5, seed: 1703, color: P.ink });
+      s += sleeves('lady', 'none', P);
+      s += solid(bodice, { seed: 1704, color: PAPER, edge: 6, edgeColor: P.ink });
+      // the ribbed pleats across the bodice
+      s += hatch(bodice, { gap: 11, w: 3.4, angle: 96, seed: 1705, color: P.fill, edge: 0, base: null });
+      s += stroke([[CX - 42, A.shoulderY + 10], [CX, A.shoulderY + 22], [CX + 42, A.shoulderY + 10]], { w: 6, seed: 1706, color: P.ink });
+      // the rosette at the waist
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        s += solid(ellipsePts(CX + Math.cos(a) * 15, A.waistY + 8 + Math.sin(a) * 11, 11, 8, 12), { seed: 1708 + i, color: PAPER, edge: 4.5, edgeColor: P.ink });
+      }
+      s += solid(ellipsePts(CX, A.waistY + 8, 9, 8, 12), { seed: 1715, color: P.fill, edge: 4.5, edgeColor: P.ink });
+      s += beads([[CX - 96, 336], [CX - 58, 348]], { r: 7, gap: 20, seed: 1716, color: P.ink });
+      return s;
+    },
+  },
+  {
+    id: 'star-tutu',
+    name: 'Star Tutu',
+    preview: [16, 100, 208, 320],
+    draw: (P) => {
+      const skirtY = 246;
+      const half = 92;
+      const top = [
+        [CX - 26, A.chestY - 16],
+        [CX + 26, A.chestY - 16],
+        [CX + 24, A.waistY + 14],
+        [CX - 24, A.waistY + 14],
+      ];
+      // a wide flat tutu with radiating pleats
+      const disc = [
+        [CX - half, skirtY],
+        ...arcPts(CX, skirtY - 4, half, 30, 0, Math.PI, 16),
+      ];
+      let s = solid(disc, { seed: 1721, color: PAPER, edge: 6, edgeColor: P.ink });
+      for (let i = -7; i <= 7; i++) {
+        s += stroke(
+          [
+            [CX + i * 4, A.waistY + 16],
+            [CX + i * 12.5, skirtY + 22],
+          ],
+          { w: 3.4, seed: 1722 + i, color: P.fill }
+        );
+      }
+      // spiky stars dangling round the hem
+      for (let i = 0; i <= 8; i++) {
+        const x = CX - half + (2 * half * i) / 8;
+        const y = skirtY + 22 - Math.abs(i - 4) * 2.5;
+        s += star(x, y, 13, 5, 1741 + i, P.ink);
+      }
+      s += sleeves('lady', 'none', P);
+      s += solid(top, { seed: 1751, color: P.fill, edge: 6, edgeColor: P.ink });
+      s += limb([[CX - 16, A.chestY - 14], [CX - 20, A.shoulderY - 2]], P, 8, 1752);
+      s += limb([[CX + 16, A.chestY - 14], [CX + 20, A.shoulderY - 2]], P, 8, 1754);
+      s += star(CX, A.chestY + 16, 20, 5, 1756, PAPER);
+      return s;
+    },
+  },
+  {
+    id: 'fairy-gown',
+    name: 'Fairy Gown',
+    preview: [10, 96, 220, 344],
+    draw: (P) => {
+      const skirt = skirtPts(26, 214, 96, 396, 14);
+      const bib = [
+        [CX - 32, A.shoulderY + 6],
+        [CX + 32, A.shoulderY + 6],
+        [CX + 30, A.hipY - 12],
+        [CX - 30, A.hipY - 12],
+      ];
+      let s = solid(skirt, { seed: 1761, color: PAPER, edge: 7, edgeColor: P.ink });
+      // tiers of petals down the skirt
+      [[52, 272], [74, 322], [94, 372]].forEach(([hw, y], i) => {
+        s += stroke(scallop(CX - hw, CX + hw, y, 4 + i * 2, 15), { w: 5, seed: 1762 + i, color: P.fill });
+      });
+      s += sleeves('lady', 'none', P);
+      s += solid(bib, { seed: 1766, color: PAPER, edge: 6, edgeColor: P.ink });
+      s += limb([[CX - 24, A.shoulderY + 8], [CX - 26, A.shoulderY - 8]], P, 8, 1767);
+      s += limb([[CX + 24, A.shoulderY + 8], [CX + 26, A.shoulderY - 8]], P, 8, 1769);
+      s += solid(
+        [
+          [CX - 32, A.hipY - 14],
+          [CX + 32, A.hipY - 14],
+          [CX + 32, A.hipY + 2],
+          [CX - 32, A.hipY + 2],
+        ],
+        { seed: 1771, color: P.fill, edge: 5, edgeColor: P.ink }
+      );
+      // a crescent moon and a sparkle on the front
+      // a crescent, drawn the way a child does it: one thick curved stroke
+      s += stroke(arcPts(CX - 8, A.chestY + 22, 19, 21, 0.75, Math.PI * 1.25, 14), { w: 6, seed: 1772, color: P.fill });
+      s += star(CX + 20, A.chestY + 18, 15, 4, 1773, P.fill);
+      return s;
+    },
+  },
+  {
+    id: 'laced-bodice',
+    name: 'Laced Bodice',
+    preview: [22, 100, 196, 260],
+    draw: (P) => {
+      const top = bodicePts('lady', { top: A.shoulderY + 2, bottom: A.waistY + 8 });
+      const skirt = [
+        [CX - 24, A.waistY + 4],
+        [CX + 24, A.waistY + 4],
+        [CX + 46, A.hipY + 30],
+        [CX - 46, A.hipY + 30],
+      ];
+      let s = solid(skirt, { seed: 1781, color: PAPER, edge: 6, edgeColor: P.ink });
+      s += hatch(skirt, { gap: 10, w: 3.4, angle: 100, seed: 1782, color: P.fill, edge: 0, base: null });
+      s += stroke(scallop(CX - 46, CX + 46, A.hipY + 30, 7, 8), { w: 4.5, seed: 1783, color: P.ink });
+      s += sleeves('lady', 'puff', P, 1784);
+      s += solid(top, { seed: 1786, color: PAPER, edge: 6, edgeColor: P.ink });
+      // criss-cross lacing down the front
+      for (let i = 0; i < 5; i++) {
+        const y = A.chestY - 12 + i * 15;
+        s += stroke([[CX - 13, y], [CX + 13, y + 15]], { w: 4, seed: 1787 + i, color: P.fill });
+        s += stroke([[CX + 13, y], [CX - 13, y + 15]], { w: 4, seed: 1792 + i, color: P.fill });
+      }
+      s += stroke([[CX - 13, A.chestY - 14], [CX - 13, A.waistY + 6]], { w: 4, seed: 1797, color: P.ink });
+      s += stroke([[CX + 13, A.chestY - 14], [CX + 13, A.waistY + 6]], { w: 4, seed: 1798, color: P.ink });
+      return s;
+    },
+  },
 ];
 
 const ladyHead = [
@@ -585,6 +723,74 @@ const ladyHead = [
       return s;
     },
   },
+  {
+    id: 'starburst-tiara',
+    name: 'Starburst Tiara',
+    preview: [48, -22, 144, 118],
+    draw: (P) => {
+      let s = stroke(arcPts(CX, A.headCy - 14, 34, 26, Math.PI + 0.25, Math.PI * 2 - 0.25, 12), { w: 8, seed: 1801, color: P.fill });
+      // a row of little jewels along the band
+      s += beads([[CX - 30, A.headCy - 26], [CX, A.headCy - 38], [CX + 30, A.headCy - 26]], { r: 5, gap: 14, seed: 1802, color: P.ink });
+      s += stroke([[CX, A.headCy - 40], [CX, A.headCy - 52]], { w: 5, seed: 1803, color: P.ink });
+      s += star(CX, A.headCy - 74, 28, 6, 1804, P.fill);
+      s += solid(ellipsePts(CX, A.headCy - 74, 8, 8, 12), { seed: 1805, color: PAPER, edge: 4.5, edgeColor: P.ink });
+      return s;
+    },
+  },
+  {
+    id: 'jewel-crown',
+    name: 'Jewel Crown',
+    preview: [52, 0, 136, 92],
+    draw: (P) => {
+      const t = teeth(CX - 30, CX + 30, A.headCy - 30, A.headCy - 84, 5, { wobble: 3 });
+      let s = stroke(t, { w: 6, seed: 1811, color: P.fill });
+      s += stroke([[CX - 32, A.headCy - 28], [CX + 32, A.headCy - 28]], { w: 8, seed: 1812, color: P.fill });
+      // teardrop jewels hanging under the band
+      for (let i = -2; i <= 2; i++) {
+        const x = CX + i * 13;
+        s += solid(ellipsePts(x, A.headCy - 20, 5.5, 8, 12), { seed: 1813 + i, color: PAPER, edge: 4, edgeColor: P.ink });
+      }
+      return s;
+    },
+  },
+  {
+    id: 'plume-hat',
+    name: 'Plumed Hat',
+    preview: [40, 0, 160, 106],
+    draw: (P) => {
+      const dome = [
+        [CX - 34, A.headCy - 16],
+        ...arcPts(CX, A.headCy - 18, 34, 34, Math.PI, Math.PI * 2, 12),
+      ];
+      // tall feathers first, so the inked hat sits over their roots
+      let s = '';
+      [[-26, -104, -34], [-6, -118, -12], [16, -110, 10], [32, -92, 30]].forEach(([dx, dy, cx2], i) => {
+        const tip = [CX + dx, A.headCy + dy];
+        const base = [CX + cx2 * 0.5, A.headCy - 40];
+        s += scribble(
+          [
+            base,
+            [tip[0] - 11, (tip[1] + base[1]) / 2],
+            tip,
+            [tip[0] + 11, (tip[1] + base[1]) / 2],
+          ],
+          { gap: 7, w: 3.2, angle: 50 + i * 18, seed: 1821 + i, color: P.fill, edge: 4, edgeColor: P.ink }
+        );
+      });
+      s += solid(dome, { seed: 1826, color: P.fill, edge: 6, edgeColor: P.ink });
+      s += solid(
+        [
+          [CX - 46, A.headCy - 22],
+          [CX + 46, A.headCy - 22],
+          [CX + 42, A.headCy - 8],
+          [CX - 42, A.headCy - 8],
+        ],
+        { seed: 1827, color: P.fill, edge: 5, edgeColor: P.ink }
+      );
+      s += beads([[CX - 34, A.headCy - 26], [CX + 34, A.headCy - 26]], { r: 4, gap: 12, seed: 1828, color: PAPER });
+      return s;
+    },
+  },
 ];
 
 const ladyNeck = [
@@ -734,6 +940,40 @@ const ladyFeet = [
   },
   { id: 'sandals', name: 'Sandals', preview: [66, 372, 108, 68], draw: pair((x, y, d, P, s) => shoeShape(x, y, d, P, s, 'sandal')) },
   { id: 'clogs', name: 'Clogs', preview: [62, 366, 116, 74], draw: pair((x, y, d, P, s) => shoeShape(x, y, d, P, s, 'chunky')) },
+  {
+    id: 'ballet-shoes',
+    name: 'Ballet Shoes',
+    preview: [56, 300, 128, 140],
+    draw: (P) => {
+      const shoe = (x, dir, seed) =>
+        solid(
+          [
+            [x - 12, A.ankleY - 4],
+            [x + 12, A.ankleY - 4],
+            [x + dir * 20, A.ankleY + 8],
+            [x + dir * 20, A.ankleY + 16],
+            [x - 12, A.ankleY + 16],
+          ],
+          { seed, color: P.fill, edge: 5, edgeColor: P.ink }
+        ) + stroke([[x - 11, A.ankleY - 6], [x + dir * 6, A.ankleY - 12], [x + 13, A.ankleY - 4]], { w: 4.5, seed: seed + 2, color: P.ink });
+      // ribbons criss-crossing up the shin
+      const laces = (x, seed) => {
+        let out = '';
+        for (let i = 0; i < 4; i++) {
+          const y = A.kneeY + 4 + i * 20;
+          out += stroke([[x - 11, y], [x + 11, y + 20]], { w: 3.6, seed: seed + i, color: P.fill });
+          out += stroke([[x + 11, y], [x - 11, y + 20]], { w: 3.6, seed: seed + 9 + i, color: P.fill });
+        }
+        return out;
+      };
+      return (
+        laces(A.legLx - 4, 1831) +
+        laces(A.legRx + 4, 1841) +
+        shoe(A.footLx - 2, -1, 1851) +
+        shoe(A.footRx + 2, 1, 1855)
+      );
+    },
+  },
 ];
 
 const ladyExtra = [
@@ -864,6 +1104,69 @@ const ladyExtra = [
         ) +
         stroke([[bx, by - 22], [bx, by + 18]], { w: 5, seed: 1422, color: PAPER }) +
         beads([[bx - 22, by - 8], [bx - 6, by - 9]], { r: 3, gap: 9, seed: 1423, color: PAPER })
+      );
+    },
+  },
+  {
+    id: 'fairy-wings',
+    name: 'Fairy Wings',
+    preview: [0, 100, 240, 200],
+    draw: (P) => {
+      const wing = (dir, seed) => {
+        const tipX = CX + dir * 104;
+        const shape = [
+          [CX + dir * 22, A.shoulderY + 2],
+          [CX + dir * 62, A.chestY - 26],
+          [tipX, A.waistY - 14],
+          [CX + dir * 96, A.hipY + 24],
+          [CX + dir * 54, A.hipY + 34],
+          [CX + dir * 24, A.waistY + 6],
+        ];
+        let out = solid(shape, { seed, color: PAPER, edge: 7, edgeColor: P.ink });
+        // feathers fanning from the shoulder to the outer edge
+        for (let i = 0; i <= 6; i++) {
+          const t = i / 6;
+          out += stroke(
+            [
+              [CX + dir * 26, A.shoulderY + 12],
+              [CX + dir * (58 + t * 40), A.chestY - 12 + t * 92],
+            ],
+            { w: 3.6, seed: seed + 2 + i, color: P.fill }
+          );
+        }
+        out += stroke(
+          [
+            [CX + dir * 24, A.waistY + 4],
+            [CX + dir * 60, A.waistY - 6],
+            [CX + dir * 98, A.waistY - 12],
+          ],
+          { w: 4, seed: seed + 12, color: P.fill }
+        );
+        return out;
+      };
+      return wing(-1, 1861) + wing(1, 1871);
+    },
+  },
+  {
+    id: 'hand-mirror',
+    name: 'Hand Mirror',
+    preview: [150, 150, 90, 130],
+    draw: (P) => {
+      const h = A.handR;
+      const cx = h[0] + 22;
+      const cy = h[1] - 52;
+      const face = [
+        [cx, cy - 34],
+        [cx + 21, cy],
+        [cx, cy + 34],
+        [cx - 21, cy],
+      ];
+      return (
+        limb([[h[0] + 4, h[1] + 16], [cx, cy + 30]], P, 7, 1881) +
+        solid(ellipsePts(h[0] + 12, h[1] + 8, 11, 10, 12), { seed: 1882, color: P.fill, edge: 5, edgeColor: P.ink }) +
+        solid(face, { seed: 1883, color: PAPER, edge: 7, edgeColor: P.ink }) +
+        stroke([[cx - 9, cy + 8], [cx + 4, cy - 16]], { w: 4, seed: 1884, color: P.fill }) +
+        stroke([[cx + 2, cy + 12], [cx + 11, cy - 4]], { w: 4, seed: 1885, color: P.fill })
       );
     },
   },
@@ -1162,6 +1465,32 @@ const gentOutfits = [
       );
     },
   },
+  {
+    id: 'button-jacket',
+    name: 'Button Jacket',
+    preview: [24, 96, 192, 340],
+    draw: (P) => {
+      const jacket = [
+        [CX - 40, A.shoulderY - 2],
+        [CX - 36, A.waistY + 24],
+        [CX + 36, A.waistY + 24],
+        [CX + 40, A.shoulderY - 2],
+        [CX + 14, A.shoulderY - 8],
+        [CX - 14, A.shoulderY - 8],
+      ];
+      return (
+        limb([[CX - 14, A.hipY - 4], [A.legLx - 8, A.kneeY], [A.footLx - 10, A.ankleY - 6]], P, 24, 1901) +
+        limb([[CX + 14, A.hipY - 4], [A.legRx + 8, A.kneeY], [A.footRx + 10, A.ankleY - 6]], P, 24, 1904) +
+        sleeves('gent', 'long', P, 1907) +
+        solid(jacket, { seed: 1909, color: PAPER, edge: 7, edgeColor: P.ink }) +
+        stroke([[CX - 16, A.shoulderY - 6], [CX, A.chestY - 12], [CX + 16, A.shoulderY - 6]], { w: 5, seed: 1911, color: P.ink }) +
+        [0, 1, 2]
+          .map((i) => solid(ellipsePts(CX, A.chestY + 4 + i * 22, 7, 9, 12), { seed: 1912 + i, color: PAPER, edge: 4.5, edgeColor: P.ink }))
+          .join('') +
+        stroke([[CX - 36, A.waistY + 22], [CX + 36, A.waistY + 22]], { w: 6, seed: 1916, color: P.ink })
+      );
+    },
+  },
 ];
 
 const gentHead = [
@@ -1333,6 +1662,40 @@ const gentHead = [
         { gap: 7, w: 3.4, angle: 80, seed: 1574, color: P.fill, edge: 5, edgeColor: P.ink }
       );
       return s;
+    },
+  },
+  {
+    id: 'stovepipe',
+    name: 'Stovepipe Hat',
+    preview: [48, -64, 144, 140],
+    draw: (P) => {
+      const crown = [
+        [CX - 19, A.headCy - 40],
+        [CX - 17, A.headCy - 118],
+        [CX + 17, A.headCy - 118],
+        [CX + 19, A.headCy - 40],
+      ];
+      return (
+        solid(crown, { seed: 1921, color: PAPER, edge: 7, edgeColor: P.ink }) +
+        scribble(
+          [
+            [CX - 18, A.headCy - 104],
+            [CX + 18, A.headCy - 104],
+            [CX + 17, A.headCy - 120],
+            [CX - 17, A.headCy - 120],
+          ],
+          { gap: 6, w: 3.4, angle: 40, seed: 1922, color: P.fill, edge: 5, edgeColor: P.ink }
+        ) +
+        solid(
+          [
+            [CX - 36, A.headCy - 46],
+            [CX + 36, A.headCy - 46],
+            [CX + 34, A.headCy - 28],
+            [CX - 34, A.headCy - 28],
+          ],
+          { seed: 1923, color: P.fill, edge: 6, edgeColor: P.ink }
+        )
+      );
     },
   },
 ];
@@ -1607,6 +1970,21 @@ const gentExtra = [
       return (
         stroke([[h[0] + 6, h[1] + 12], [h[0] + 26, h[1] - 70], [top[0], top[1] + 34]], { w: 3.6, seed: 1631, color: P.ink }) +
         scribble(ellipsePts(top[0], top[1], 34, 40, 20), { gap: 9, w: 3.8, angle: -70, seed: 1632, color: P.fill, edge: 6, edgeColor: P.ink })
+      );
+    },
+  },
+  {
+    id: 'long-staff',
+    name: 'Tall Staff',
+    preview: [140, 20, 100, 300],
+    draw: (P) => {
+      const h = A.handR;
+      const top = [h[0] + 46, h[1] - 210];
+      return (
+        limb([[h[0] + 2, h[1] + 96], top], P, 8, 1931) +
+        blob(h[0] + 2, h[1] + 100, 9, rng(1932), P.ink) +
+        stroke(teeth(top[0] - 16, top[0] + 16, top[1] + 14, top[1] - 20, 3, { wobble: 3 }), { w: 5, seed: 1933, color: P.ink }) +
+        star(top[0], top[1] - 30, 15, 6, 1934, P.fill)
       );
     },
   },

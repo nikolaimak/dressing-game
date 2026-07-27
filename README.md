@@ -59,8 +59,8 @@ next time.
 
 | | |
 | --- | --- |
-| Lady | 11 outfits, 9 hats, 7 necklaces, 4 gloves, 6 shoes, 7 extras |
-| Gentleman | 11 outfits, 8 hats, 6 neckwear, 3 gloves, 5 shoes, 8 extras |
+| Lady | 15 outfits, 12 hats, 7 necklaces, 4 gloves, 7 shoes, 9 extras |
+| Gentleman | 12 outfits, 9 hats, 6 neckwear, 3 gloves, 5 shoes, 9 extras |
 | Room | 20 decorations, 12 themes, 5 wall patterns, 4 floor patterns |
 
 ## How it is built
